@@ -5,6 +5,7 @@ import { Grid, Typography, Paper } from '@mui/material';
 import {
   createBrowserRouter, RouterProvider, Outlet, useParams,
 } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import './styles/main.css';
 import TopBar from './components/TopBar';
@@ -15,30 +16,13 @@ import UserPhotos from './components/UserPhotos';
 function Home() {
   return (
     <Typography variant="body1">
-      Welcome to your photosharing app! This
-      {' '}
-      <a href="https://mui.com/components/paper/" rel="noreferrer" target="_blank">Paper</a>
-      {' '}
-      component displays the main content of the application. The
-      {/* {sm={9}} */}
-      {' '}
-      prop in the
-      {' '}
-      <a href="https://mui.com/components/grid/" rel="noreferrer" target="_blank">Grid</a>
-      {' '}
-      item component makes it responsively display 9/12 of the
-      window. The Routes definitions enables us to conditionally
-      render different components to this part of the screen.
-      There is nothing specific to display here. Use your creativity and show some
-      interesting content here.
+      Welcome to your photosharing app!
     </Typography>
   );
 }
 
 function UserDetailRoute() {
   const { userId } = useParams();
-  // eslint-disable-next-line no-console
-  console.log('UserDetailRoute: userId is:', userId);
   return <UserDetail userId={userId} />;
 }
 
@@ -80,9 +64,7 @@ const router = createBrowserRouter([
     element: <Root />,
     children: [
       { index: true, element: <Home /> },
-
       { path: 'users', element: <UserList /> },
-
       {
         path: 'users/:userId',
         element: <UserLayout />,
@@ -95,5 +77,19 @@ const router = createBrowserRouter([
   },
 ]);
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 1000 * 30,
+    },
+  },
+});
+
 const root = ReactDOM.createRoot(document.getElementById('photoshareapp'));
-root.render(<RouterProvider router={router} />);
+
+root.render(
+  <QueryClientProvider client={queryClient}>
+    <RouterProvider router={router} />
+  </QueryClientProvider>,
+);
