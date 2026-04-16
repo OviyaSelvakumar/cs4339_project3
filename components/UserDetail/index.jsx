@@ -1,36 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import {
   Typography, Button, CircularProgress, Box, Divider,
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import api from '../../lib/api';
 
 import './styles.css';
 
+async function fetchUserDetail(userId) {
+  const res = await api.get(`/user/${userId}`);
+  return res.data;
+}
+
 function UserDetail() {
   const { userId } = useParams();
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    setLoading(true);
-    setError(null);
-    api.get(`/user/${userId}`)
-      .then((res) => {
-        setUser(res.data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError('User not found.');
-        setLoading(false);
-      });
-  }, [userId]);
+  const {
+    data: user,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['user', userId],
+    queryFn: () => fetchUserDetail(userId),
+    enabled: Boolean(userId),
+  });
 
-  if (loading) return <CircularProgress sx={{ m: 2 }} />;
-  if (error) return <Typography color="error">{error}</Typography>;
+  if (isLoading) return <CircularProgress sx={{ m: 2 }} />;
+  if (error) return <Typography color="error">User not found.</Typography>;
   if (!user) return null;
 
   return (
@@ -42,16 +41,16 @@ function UserDetail() {
       </Typography>
       <Divider sx={{ mb: 2 }} />
       <Typography variant="body1">
-        <strong>Location:</strong>
-        {' '}
+        <strong>Location: </strong>
         {user.location}
       </Typography>
       <Typography variant="body1">
-        <strong>Occupation:</strong>
-        {' '}
+        <strong>Occupation: </strong>
         {user.occupation}
       </Typography>
-      <Typography variant="body1" sx={{ mt: 1 }}>{user.description}</Typography>
+      <Typography variant="body1" sx={{ mt: 1 }}>
+        {user.description}
+      </Typography>
       <Button
         variant="contained"
         sx={{ mt: 2 }}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Divider,
   List,
@@ -8,31 +8,31 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import api from '../../lib/api';
 
 import './styles.css';
 
+async function fetchUserList() {
+  const res = await api.get('/user/list');
+  return res.data;
+}
+
 function UserList() {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    api.get('/user/list')
-      .then((res) => {
-        setUsers(res.data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError('Failed to load users.');
-        setLoading(false);
-      });
-  }, []);
+  const {
+    data: users,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['users'],
+    queryFn: fetchUserList,
+  });
 
-  if (loading) return <CircularProgress sx={{ m: 2 }} />;
-  if (error) return <Typography color="error">{error}</Typography>;
-  if (users.length === 0) return <Typography>No users found.</Typography>;
+  if (isLoading) return <CircularProgress sx={{ m: 2 }} />;
+  if (error) return <Typography color="error">Failed to load users.</Typography>;
+  if (!users || users.length === 0) return <Typography>No users found.</Typography>;
 
   return (
     <div>

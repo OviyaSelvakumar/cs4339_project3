@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Typography, CircularProgress, Box, Card, CardMedia,
   CardContent, Divider, List, ListItem,
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import api from '../../lib/api';
 
 import './styles.css';
@@ -19,30 +20,28 @@ function formatDate(dateStr) {
   });
 }
 
+async function fetchPhotos(userId) {
+  const res = await api.get(`/photosOfUser/${userId}`);
+  return res.data;
+}
+
 function UserPhotos() {
   const { userId } = useParams();
   const navigate = useNavigate();
-  const [photos, setPhotos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    setLoading(true);
-    setError(null);
-    api.get(`/photosOfUser/${userId}`)
-      .then((res) => {
-        setPhotos(res.data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError('Could not load photos.');
-        setLoading(false);
-      });
-  }, [userId]);
+  const {
+    data: photos,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['photos', userId],
+    queryFn: () => fetchPhotos(userId),
+    enabled: Boolean(userId),
+  });
 
-  if (loading) return <CircularProgress sx={{ m: 2 }} />;
-  if (error) return <Typography color="error">{error}</Typography>;
-  if (photos.length === 0) {
+  if (isLoading) return <CircularProgress sx={{ m: 2 }} />;
+  if (error) return <Typography color="error">Could not load photos.</Typography>;
+  if (!photos || photos.length === 0) {
     return <Typography sx={{ p: 2 }}>No photos available.</Typography>;
   }
 
