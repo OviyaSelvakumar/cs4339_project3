@@ -1,37 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { AppBar, Toolbar, Typography } from '@mui/material';
 import { useLocation } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import api from '../../lib/api';
 
 import './styles.css';
 
 function TopBar() {
   const location = useLocation();
-  const [contextText, setContextText] = useState('');
+  const path = location.pathname;
 
-  useEffect(() => {
-    const path = location.pathname;
-    const photosMatch = path.match(/^\/users\/([^/]+)\/photos/);
-    const detailMatch = path.match(/^\/users\/([^/]+)$/);
+  const photosMatch = path.match(/^\/users\/([^/]+)\/photos/);
+  const detailMatch = path.match(/^\/users\/([^/]+)$/);
 
-    if (photosMatch) {
-      const id = photosMatch[1];
-      api.get(`/user/${id}`)
-        .then((res) => {
-          setContextText(`Photos of ${res.data.first_name} ${res.data.last_name}`);
-        })
-        .catch(() => setContextText('Photos'));
-    } else if (detailMatch) {
-      const id = detailMatch[1];
-      api.get(`/user/${id}`)
-        .then((res) => {
-          setContextText(`${res.data.first_name} ${res.data.last_name}`);
-        })
-        .catch(() => setContextText('User Detail'));
-    } else {
-      setContextText('');
-    }
-  }, [location.pathname]);
+  const activeUserId = photosMatch?.[1] || detailMatch?.[1];
+
+  const { data: user } = useQuery({
+    queryKey: ['user', activeUserId],
+    queryFn: async () => {
+      const res = await api.get(`/user/${activeUserId}`);
+      return res.data;
+    },
+    enabled: Boolean(activeUserId),
+  });
+
+  let contextText = '';
+
+  if (photosMatch && user) {
+    contextText = `Photos of ${user.first_name} ${user.last_name}`;
+  } else if (detailMatch && user) {
+    contextText = `${user.first_name} ${user.last_name}`;
+  }
 
   return (
     <AppBar className="topbar-appBar" position="absolute">
