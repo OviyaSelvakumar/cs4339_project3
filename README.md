@@ -1,90 +1,69 @@
-# Project 2: Appserver and Database (React + Vite + Axios)
+# Project 3: Authentication, Server State, and Mutations
 
 ## Prerequisites
-- Node.js LTS (>= 18)
-- npm (>= 9)
-- MongoDB running locally on 127.0.0.1
+- Node.js LTS (>= 18), npm (>= 9)
+- MongoDB on `127.0.0.1`
 
-## What you will do
-- Replace P1’s mock-backed app with a real backend and MongoDB
-- Load data into MongoDB
-- Use axios for all API calls
-- Run client (Vite) and server (Express) together
-- Verify with Mocha backend tests
+## Overview
+- TanStack Query for server state (`useQuery` / `useMutation`)
+- Express sessions + **bcrypt** (`password_digest` on `User`; never store plain passwords)
+- Login, logout, registration, and commenting on photos
+- Git/GitHub workflow per course spec (feature branches, PRs)
 
-## Directory layout
-- `photoShare.jsx` React app entry (Vite)
-- `components/` React components from P1
-- `styles/` CSS
-- `schema/` Mongoose models (`user.js`, `photo.js`, `schemaInfo.js`)
-- `webServer.js` Express server using MongoDB
-- `loadDatabase.js` Script to load demo data
-- `test/` Mocha backend tests
-
-## Migration from P1
-1) Download P1 from elearning.
-2) Copy the P2 starter code on top of it.
-3) Do all steps and ensure everything works properly.
-
-## Install
+## Setup
 ```bash
 npm install
-```
-If you need to install test deps:
-```bash
 cd test && npm install && cd ..
 ```
 
-## Load the database
-1) Make sure MongoDB is running locally.
-2) Load demo data:
+Copy your working Project 2 app into this tree if you are merging starter files from the course zip.
+
+**Database name:** `mongodb://127.0.0.1/project3` in `webServer.js` and `loadDatabase.js`.
+
 ```bash
 node loadDatabase.js
 ```
-This clears and reloads `User`, `Photo`, and a single `SchemaInfo` document.
 
-## Verifying the Database in MongoDB
-1) Open your Terminal or MongoDB Compass.
-2) If using MongoDB Compass, create a new connection, save it, and connect.
-3) Look for the `project2` database and verify that all required data is present.
+### Seeded passwords
+`loadDatabase.js` stores a fixed bcrypt digest for every demo user. That digest is the common test vector that verifies against the plaintext **`password`** (not the string `weak`). Use **`password`** when logging in as seeded users (e.g. `login_name` `took`, password `password`). Your own registrations still choose any password; those are hashed with bcrypt on the server.
 
-## Run client + server together
+## Run
 ```bash
+npm run server   # Express, port 3001
+npm run client   # Vite, port 3000
+# or
 npm run dev
 ```
-- Client (Vite): http://localhost:3000
-- Server (Express): http://localhost:3001
 
-Individual scripts:
+## API (course contract)
+| Method | Path | Auth |
+|--------|------|------|
+| POST | `/admin/login` | no |
+| POST | `/admin/logout` | yes (400 if not logged in) |
+| POST | `/user` | no (registration) |
+| GET | `/user/list` | yes |
+| GET | `/user/:id` | yes |
+| GET | `/photosOfUser/:id` | yes |
+| POST | `/commentsOfPhoto/:photoId` | yes |
+
+Optional for the UI: `GET /admin/me` returning the session user (not required by the bundled tests).
+
+## Testing
+Reset DB, start the server on port 3001, then:
 ```bash
-npm run server   # nodemon webServer.js (port 3001)
-npm run client   # vite (port 3000)
-```
-
-## API endpoints
-- `GET /user/list` → [{ _id, first_name, last_name }]
-- `GET /user/:id` → user detail { _id, first_name, last_name, location, description, occupation }
-- `GET /photosOfUser/:id` → user’s photos with comments
-
-## Testing (backend)
-From `P2_Starter_Code/test`:
-```bash
-npm install   # if not already
+cd test
+npm install
 npm test
 ```
-The tests target port 3001 and validate `/user/list`, `/user/:id`, `/photosOfUser/:id`.
 
-## Linting
+Tests assume **only** data from `loadDatabase.js`. No `/test/info` or `/test/count` routes are required or tested.
+
+## Lint
 ```bash
 npm run lint
 ```
-Fix issues:
-```bash
-npm run lint:fix
-```
 
-## Common issues
-- Mongo not running → start MongoDB before `loadDatabase.js` and `npm run server`.
-- Port conflicts → Vite uses 3000, server uses 3001. Adjust if needed.
-- CORS not needed when using same origin via proxy/baseURL; we set axios baseURL to point at 3001.
-# cs4339_project3
+## Style (course)
+- MVC-style split (routes/controllers/models), thin `webServer.js`
+- Central frontend API module (e.g. `api.js`)
+- ESLint clean; remove or disable React Query Devtools before submit
