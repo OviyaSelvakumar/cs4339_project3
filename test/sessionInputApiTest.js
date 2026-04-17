@@ -5,341 +5,334 @@
  *   node_modules/.bin/mocha sessionInputApiTest.js
  */
 
-import assert from "assert";
-import _ from "lodash";
-import axios from "axios";
+import assert from 'assert';
+import _ from 'lodash';
+import axios from 'axios';
 
 const port = 3001;
-const host = "localhost";
+const host = 'localhost';
 
 /** Plaintext for seeded users; matches bcrypt digest in loadDatabase.js */
-const SEEDED_LOGIN_PASSWORD = "password";
+const SEEDED_LOGIN_PASSWORD = 'password';
 
 function makeFullUrl(url) {
-  return "http://" + host + ":" + port + url;
+  return `http://${host}:${port}${url}`;
 }
 
-describe("Photo App: Session and Input API Tests", function () {
+describe('Photo App: Session and Input API Tests', () => {
   let sessionCookie;
-  describe("test /admin/login and /admin/logout", function () {
-    it("errors getting the list of user if not logged in", function (done) {
-      axios.get(makeFullUrl("/user/list")).then(function () {
-        assert.fail("Expected error not received");
-      }).catch(function (error) {
+  describe('test /admin/login and /admin/logout', () => {
+    it('errors getting the list of user if not logged in', (done) => {
+      axios.get(makeFullUrl('/user/list')).then(() => {
+        assert.fail('Expected error not received');
+      }).catch((error) => {
         assert.strictEqual(
           error.response.status,
           401,
-          "HTTP response status code 401"
+          'HTTP response status code 401',
         );
         done();
       });
     });
 
-    it("errors getting user detail if not logged in", function (done) {
-      axios.get(makeFullUrl("/user/1")).then(function () {
-        assert.fail("Expected error not received");
-      }).catch(function (error) {
+    it('errors getting user detail if not logged in', (done) => {
+      axios.get(makeFullUrl('/user/1')).then(() => {
+        assert.fail('Expected error not received');
+      }).catch((error) => {
         assert.strictEqual(
           error.response.status,
           401,
-          "HTTP response status code 401"
+          'HTTP response status code 401',
         );
         done();
       });
     });
 
-    it("errors getting the list of photos if not logged in", function (done) {
-      axios.get(makeFullUrl("/photosOfUser/1")).then(function () {
-        assert.fail("Expected error not received");
-      }).catch(function (error) {
+    it('errors getting the list of photos if not logged in', (done) => {
+      axios.get(makeFullUrl('/photosOfUser/1')).then(() => {
+        assert.fail('Expected error not received');
+      }).catch((error) => {
         assert.strictEqual(
           error.response.status,
           401,
-          "HTTP response status code 401"
+          'HTTP response status code 401',
         );
         done();
       });
     });
 
-    it("rejects logins to non-existent login_name", function (done) {
+    it('rejects logins to non-existent login_name', (done) => {
       axios
-        .post(makeFullUrl("/admin/login"), {
-          login_name: "notValid",
+        .post(makeFullUrl('/admin/login'), {
+          login_name: 'notValid',
         })
-        .then(function () {
-          assert.fail("Expected error not received");
+        .then(() => {
+          assert.fail('Expected error not received');
         })
-        .catch(function (error) {
+        .catch((error) => {
           assert.strictEqual(
             error.response.status,
             400,
-            "HTTP response status code 400"
+            'HTTP response status code 400',
           );
           done();
         });
     });
 
-    it("rejects logins to existing login_name with wrong password", function (done) {
+    it('rejects logins to existing login_name with wrong password', (done) => {
       axios
-        .post(makeFullUrl("/admin/login"), {
-          login_name: "took",
-          password: "wrong",
+        .post(makeFullUrl('/admin/login'), {
+          login_name: 'took',
+          password: 'wrong',
         })
-        .then(function () {
-          assert.fail("Expected error not received");
+        .then(() => {
+          assert.fail('Expected error not received');
         })
-        .catch(function (error) {
+        .catch((error) => {
           assert.strictEqual(
             error.response.status,
             400,
-            "HTTP response status code 400"
+            'HTTP response status code 400',
           );
           done();
         });
     });
-    it("accepts logins to existing login_name with correct password", function (done) {
+    it('accepts logins to existing login_name with correct password', (done) => {
       axios
-        .post(makeFullUrl("/admin/login"), {
-          login_name: "took",
+        .post(makeFullUrl('/admin/login'), {
+          login_name: 'took',
           password: SEEDED_LOGIN_PASSWORD,
         })
-        .then(function (response) {
+        .then((response) => {
           assert.strictEqual(
             response.status,
             200,
-            "HTTP response status code 200"
+            'HTTP response status code 200',
           );
           sessionCookie = response.headers['set-cookie'][0];
           assert.ok(sessionCookie, 'Session cookie found');
           done();
         })
-        .catch(function () {
-          assert.fail("Unexpected error received");
+        .catch(() => {
+          assert.fail('Unexpected error received');
         });
     });
-  
-    it("can get user list when logged in", function (done) {
-      axios.get(makeFullUrl("/user/list"), {
+
+    it('can get user list when logged in', (done) => {
+      axios.get(makeFullUrl('/user/list'), {
         headers: {
-          Cookie: sessionCookie // use the session cookie from the previous test
-        }
-      }).then(function (response) {
+          Cookie: sessionCookie, // use the session cookie from the previous test
+        },
+      }).then((response) => {
         assert.strictEqual(
           response.status,
           200,
-          "HTTP response status code 200"
+          'HTTP response status code 200',
         );
         done();
-      }).catch(function () {
-        assert.fail("Unexpected error received");
+      }).catch(() => {
+        assert.fail('Unexpected error received');
       });
     });
 
-    it("can logout when logged in", function (done) {
-
-      axios.post(makeFullUrl("/admin/logout"),{},  {
-            headers: {
-              Cookie: sessionCookie // use the session cookie from the previous test
-            }
-        }).then(function (response) {
-          assert.strictEqual(
-            response.status,
-            200,
-            "HTTP response status code 200"
-         );
-         done();
-      }).catch(function () {
-        assert.fail("Unexpected error received");
+    it('can logout when logged in', (done) => {
+      axios.post(makeFullUrl('/admin/logout'), {}, {
+        headers: {
+          Cookie: sessionCookie, // use the session cookie from the previous test
+        },
+      }).then((response) => {
+        assert.strictEqual(
+          response.status,
+          200,
+          'HTTP response status code 200',
+        );
+        done();
+      }).catch(() => {
+        assert.fail('Unexpected error received');
       });
     });
-
   });
 
-  describe("test /commentsOfPhoto/id", function () {
+  describe('test /commentsOfPhoto/id', () => {
     let user_id;
     let photos;
     let photos2;
-    const newCommentText = "this is a new comment";
+    const newCommentText = 'this is a new comment';
     let photo_id;
     let originalPhoto;
 
-
-    it("can login as took and get id", function (done) {
+    it('can login as took and get id', (done) => {
       axios
-        .post(makeFullUrl("/admin/login"), {
-          login_name: "took",
+        .post(makeFullUrl('/admin/login'), {
+          login_name: 'took',
           password: SEEDED_LOGIN_PASSWORD,
         })
-        .then(function (response) {
+        .then((response) => {
           sessionCookie = response.headers['set-cookie'][0];
           assert.ok(sessionCookie, 'Session cookie found');
-          assert.strictEqual(response.status, 200, "HTTP response status code 200");
+          assert.strictEqual(response.status, 200, 'HTTP response status code 200');
           assert.ok(response.data._id, "Login response body contains user's _id");
           user_id = response.data._id;
           done();
         })
-        .catch(function () {
-          assert.fail("Unexpected error received");
+        .catch(() => {
+          assert.fail('Unexpected error received');
         });
     });
 
-    it("can get tooks photos", function (done) {
-      axios.get(makeFullUrl("/photosOfUser/" + user_id), {
-            headers: {
-              Cookie: sessionCookie // use the session cookie from the previous test
-            }
-      }).then(function (response) {
+    it('can get tooks photos', (done) => {
+      axios.get(makeFullUrl(`/photosOfUser/${user_id}`), {
+        headers: {
+          Cookie: sessionCookie, // use the session cookie from the previous test
+        },
+      }).then((response) => {
         assert.strictEqual(
           response.status,
           200,
-          "HTTP response status code 200"
+          'HTTP response status code 200',
         );
         photos = response.data;
         done();
-      }).catch(function () {
-        assert.fail("Unexpected error received");
+      }).catch(() => {
+        assert.fail('Unexpected error received');
       });
     });
 
-    it("can add a comment to the the first photo", function (done) {
+    it('can add a comment to the the first photo', (done) => {
       originalPhoto = photos[0];
       photo_id = originalPhoto._id;
       axios
-        .post(makeFullUrl("/commentsOfPhoto/" + photo_id), {
+        .post(makeFullUrl(`/commentsOfPhoto/${photo_id}`), {
           comment: newCommentText,
         }, {
           headers: {
-            Cookie: sessionCookie // use the session cookie from the previous test
-          }
-        }).then(function (response) {
+            Cookie: sessionCookie, // use the session cookie from the previous test
+          },
+        }).then((response) => {
           assert.strictEqual(
             response.status,
             200,
-            "HTTP response status code 200"
-          );  
+            'HTTP response status code 200',
+          );
           done();
         })
-        .catch(function () { 
-          assert.fail("Unexpected error received");
+        .catch(() => {
+          assert.fail('Unexpected error received');
         });
     });
 
-    it("can get tooks photos again", function (done) {
-      axios.get(makeFullUrl("/photosOfUser/" + user_id), {
-          headers: {
-            Cookie: sessionCookie // use the session cookie from the previous test
-          }
-      }).then(function (response) {
+    it('can get tooks photos again', (done) => {
+      axios.get(makeFullUrl(`/photosOfUser/${user_id}`), {
+        headers: {
+          Cookie: sessionCookie, // use the session cookie from the previous test
+        },
+      }).then((response) => {
         assert.strictEqual(
           response.status,
           200,
-          "HTTP response status code 200"
+          'HTTP response status code 200',
         );
         photos2 = response.data;
         done();
-      }).catch(function () {
-        assert.fail("Unexpected error received");
+      }).catch(() => {
+        assert.fail('Unexpected error received');
       });
     });
 
-
-    it("photo has one more comment", function (done) {
+    it('photo has one more comment', (done) => {
       const newPhoto = _.find(photos2, { _id: photo_id });
-      assert(newPhoto, "Can not find photo");
+      assert(newPhoto, 'Can not find photo');
       assert.strictEqual(
         newPhoto.comments.length,
-        originalPhoto.comments.length + 1
+        originalPhoto.comments.length + 1,
       );
       done();
     });
 
-    it("can logout when logged in", function (done) {
-      axios.post(makeFullUrl("/admin/logout"), {}, {
+    it('can logout when logged in', (done) => {
+      axios.post(makeFullUrl('/admin/logout'), {}, {
         headers: {
-          Cookie: sessionCookie // use the session cookie from the previous test
-        }
-      }).then(function (response) {
+          Cookie: sessionCookie, // use the session cookie from the previous test
+        },
+      }).then((response) => {
         assert.strictEqual(
           response.status,
           200,
-          "HTTP response status code 200"
+          'HTTP response status code 200',
         );
         done();
-      }).catch(function () {
-        assert.fail("Unexpected error received");
+      }).catch(() => {
+        assert.fail('Unexpected error received');
       });
     });
   });
 
+  describe('register user - post to /user', () => {
+    const newUniqueLoginName = `u${String(new Date().valueOf())}`;
 
-  describe("register user - post to /user", function () {
-    const newUniqueLoginName = "u" + String(new Date().valueOf());
-    
-    it("can create a new user", function (done) {
-
+    it('can create a new user', (done) => {
       const params = {
         login_name: newUniqueLoginName,
-        password: "weak2",
-        first_name: "Fn" + newUniqueLoginName,
-        last_name: "Ln" + newUniqueLoginName,
-        location: "Loc" + newUniqueLoginName,
-        description: "Desc" + newUniqueLoginName,
-        occupation: "Occ" + newUniqueLoginName,
+        password: 'weak2',
+        first_name: `Fn${newUniqueLoginName}`,
+        last_name: `Ln${newUniqueLoginName}`,
+        location: `Loc${newUniqueLoginName}`,
+        description: `Desc${newUniqueLoginName}`,
+        occupation: `Occ${newUniqueLoginName}`,
       };
       axios
-        .post(makeFullUrl("/user"), params)
-       .then(function (response) {
-         assert.strictEqual(response.status, 200, "HTTP response status code 200");
-         assert.strictEqual(
-          response.data.login_name,
-          params.login_name,
-          "Response body contains login_name"
-        );
-        assert.strictEqual(
-          response.data.first_name,
-          params.first_name,
-          "Response body contains first_name"
-        );
-        assert.strictEqual(
-          response.data.last_name,
-          params.last_name,
-          "Response body contains last_name"
-        );
-        assert.ok(
-          !Object.prototype.hasOwnProperty.call(response.data, "password_digest"),
-          "Response must not include password_digest"
-        );
-      done();
-      })
-      .catch(function (error) {
-       done(error);
-      });
-    });
-      
-
-    it("can reject a duplicate user", function (done) {
-      const params = {
-        login_name: newUniqueLoginName,
-        password: "weak2",
-        first_name: "Fn" + newUniqueLoginName,
-        last_name: "Ln" + newUniqueLoginName,
-        location: "Loc" + newUniqueLoginName,
-        description: "Desc" + newUniqueLoginName,
-        occupation: "Occ" + newUniqueLoginName,
-      };
-      axios
-        .post(makeFullUrl("/user"), params)
-        .then(function () {
-          assert.fail("Expected error not received");
+        .post(makeFullUrl('/user'), params)
+        .then((response) => {
+          assert.strictEqual(response.status, 200, 'HTTP response status code 200');
+          assert.strictEqual(
+            response.data.login_name,
+            params.login_name,
+            'Response body contains login_name',
+          );
+          assert.strictEqual(
+            response.data.first_name,
+            params.first_name,
+            'Response body contains first_name',
+          );
+          assert.strictEqual(
+            response.data.last_name,
+            params.last_name,
+            'Response body contains last_name',
+          );
+          assert.ok(
+            !Object.prototype.hasOwnProperty.call(response.data, 'password_digest'),
+            'Response must not include password_digest',
+          );
+          done();
         })
-       .catch(function (error) {
+        .catch((error) => {
+          done(error);
+        });
+    });
+
+    it('can reject a duplicate user', (done) => {
+      const params = {
+        login_name: newUniqueLoginName,
+        password: 'weak2',
+        first_name: `Fn${newUniqueLoginName}`,
+        last_name: `Ln${newUniqueLoginName}`,
+        location: `Loc${newUniqueLoginName}`,
+        description: `Desc${newUniqueLoginName}`,
+        occupation: `Occ${newUniqueLoginName}`,
+      };
+      axios
+        .post(makeFullUrl('/user'), params)
+        .then(() => {
+          assert.fail('Expected error not received');
+        })
+        .catch((error) => {
           assert.strictEqual(
             error.response.status,
             400,
-            "HTTP response status code 400"
+            'HTTP response status code 400',
           );
           done();
-       });
+        });
     });
   });
 });

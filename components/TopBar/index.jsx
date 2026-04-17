@@ -36,7 +36,7 @@ function TopBar() {
     <AppBar className="topbar-appBar" position="absolute">
       <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
         <Typography variant="h5" color="inherit">
-          Oviya Selvakumar
+          Oviya Selvakumar & Susan Zhang
         </Typography>
         {contextText && (
           <Typography variant="h6" color="inherit">
