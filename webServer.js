@@ -169,7 +169,7 @@ app.post('/user', async (req, res) => {
       occupation: occupation || ""
     });
 
-    return res.status(201).json({
+    return res.status(200).json({
       _id: user._id,
       first_name: user.first_name,
       last_name: user.last_name,
