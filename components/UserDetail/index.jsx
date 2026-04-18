@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import api from '../../lib/api';
+import api from '../../lib/api.js';
 
 import './styles.css';
 

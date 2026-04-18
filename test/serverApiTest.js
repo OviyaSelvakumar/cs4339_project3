@@ -4,35 +4,35 @@
  *   node_modules/.bin/mocha serverApiTest.js
  */
 
-import assert from "assert";
-import http from "http";
+import assert from 'assert';
+import http from 'http';
 // eslint-disable-next-line import/no-extraneous-dependencies
-import async from "async";
-import _ from "lodash";
-import fs from "fs";
-import models from "../modelData/photoApp.js";
+import async from 'async';
+import _ from 'lodash';
+import fs from 'fs';
+import models from '../modelData/photoApp.js';
 
 const port = 3001;
-const host = "localhost";
+const host = 'localhost';
 
 /** Plaintext for seeded users; matches bcrypt digest in loadDatabase.js */
-const SEEDED_LOGIN_PASSWORD = "password";
+const SEEDED_LOGIN_PASSWORD = 'password';
 
 // Valid properties of a user list model
-const userListProperties = ["first_name", "last_name", "_id"];
+const userListProperties = ['first_name', 'last_name', '_id'];
 // Valid properties of a user detail model
 const userDetailProperties = [
-  "first_name",
-  "last_name",
-  "_id",
-  "location",
-  "description",
-  "occupation",
+  'first_name',
+  'last_name',
+  '_id',
+  'location',
+  'description',
+  'occupation',
 ];
 // Valid properties of the photo model
-const photoProperties = ["file_name", "date_time", "user_id", "_id", "comments"];
+const photoProperties = ['file_name', 'date_time', 'user_id', '_id', 'comments'];
 // Valid comments properties
-const commentProperties = ["comment", "date_time", "_id", "user"];
+const commentProperties = ['comment', 'date_time', '_id', 'user'];
 
 function assertEqualDates(d1, d2) {
   assert(new Date(d1).valueOf() === new Date(d2).valueOf());
@@ -47,55 +47,54 @@ function removeMongoProperties(model) {
   return model;
 }
 
-describe("Photo App: Server API Tests", function () {
+describe('Photo App: Server API Tests', () => {
   let authCookie; // Session cookie from login request
 
-  describe("test using model data", function () {
-    it("webServer does not import model data", function (done) {
-      fs.readFile("../webServer.js", function (err, data) {
+  describe('test using model data', () => {
+    it('webServer does not import model data', (done) => {
+      fs.readFile('../webServer.js', (err, data) => {
         if (err) throw err;
         const src = data.toString();
         assert(
-          !src.includes("modelData/photoApp"),
-          "webServer must not import modelData/photoApp.js"
+          !src.includes('modelData/photoApp'),
+          'webServer must not import modelData/photoApp.js',
         );
         done();
       });
     });
   });
 
-  describe("login the user took", function () {
-    it("can login took with a post to /admin/login", function (done) {
+  describe('login the user took', () => {
+    it('can login took with a post to /admin/login', (done) => {
       const postBody = JSON.stringify({
-        login_name: "took",
+        login_name: 'took',
         password: SEEDED_LOGIN_PASSWORD,
       });
 
       const options = {
         hostname: host,
-        port: port,
-        path: "/admin/login",
-        method: "POST",
+        port,
+        path: '/admin/login',
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          "Content-Length": postBody.length,
+          'Content-Type': 'application/json',
+          'Content-Length': postBody.length,
         },
       };
 
-      const request = http.request(options, function (response) {
-        response.on("data", function () {});
+      const request = http.request(options, (response) => {
+        response.on('data', () => {});
 
-        response.on("end", function () {
+        response.on('end', () => {
           assert.strictEqual(
             response.statusCode,
             200,
-            "HTTP response status code not OK"
+            'HTTP response status code not OK',
           );
           // If express-session middleware was enabled we should have a
           // 'set-cookie' response header with the Express session cookie. We
           // assume it will be the first (and only) cookie.
-          authCookie =
-            response.headers["set-cookie"] && response.headers["set-cookie"][0];
+          authCookie = response.headers['set-cookie'] && response.headers['set-cookie'][0];
           done();
         });
       });
@@ -104,159 +103,159 @@ describe("Photo App: Server API Tests", function () {
       request.end();
     });
 
-    it("can retrieve the Express session cookie", function (done) {
-      assert(authCookie, "found a session cookie in the login POST response");
+    it('can retrieve the Express session cookie', (done) => {
+      assert(authCookie, 'found a session cookie in the login POST response');
       assert(
         authCookie.match(/^connect\.sid=/),
-        "looks like an Express cookie"
+        'looks like an Express cookie',
       );
       done();
     });
   });
 
-  describe("test /user/list", function () {
+  describe('test /user/list', () => {
     let userList;
     const Users = models.userListModel();
 
-    it("can get the list of user", function (done) {
+    it('can get the list of user', (done) => {
       http.get(
         {
           hostname: host,
-          port: port,
-          path: "/user/list",
+          port,
+          path: '/user/list',
           headers: { Cookie: authCookie },
         },
-        function (response) {
-          let responseBody = "";
-          response.on("data", function (chunk) {
+        (response) => {
+          let responseBody = '';
+          response.on('data', (chunk) => {
             responseBody += chunk;
           });
 
-          response.on("end", function () {
+          response.on('end', () => {
             assert.strictEqual(
               response.statusCode,
               200,
-              "HTTP response status code not OK"
+              'HTTP response status code not OK',
             );
             userList = JSON.parse(responseBody);
             done();
           });
-        }
+        },
       );
     });
 
-    it("is an array", function (done) {
+    it('is an array', (done) => {
       assert(Array.isArray(userList));
       done();
     });
 
-    it("has the correct number elements", function (done) {
+    it('has the correct number elements', (done) => {
       assert.strictEqual(
         userList.length,
         Users.length,
-        "Wrong number of users. Did you forget to run loadDatabase.js?"
+        'Wrong number of users. Did you forget to run loadDatabase.js?',
       );
       done();
     });
 
-    it("has an entry for each of the users", function (done) {
+    it('has an entry for each of the users', (done) => {
       async.each(
         Users,
-        function (realUser, callback) {
+        (realUser, callback) => {
           const user = _.find(userList, {
             first_name: realUser.first_name,
             last_name: realUser.last_name,
           });
           assert(
             user,
-            "could not find user " +
-              realUser.first_name +
-              " " +
-              realUser.last_name
+            `could not find user ${
+              realUser.first_name
+            } ${
+              realUser.last_name}`,
           );
           assert.strictEqual(
-            _.countBy(userList, "_id")[user._id],
+            _.countBy(userList, '_id')[user._id],
             1,
-            "Multiple users with id:" + user._id
+            `Multiple users with id:${user._id}`,
           );
           const extraProps = _.difference(
             Object.keys(removeMongoProperties(user)),
-            userListProperties
+            userListProperties,
           );
           assert.strictEqual(
             extraProps.length,
             0,
-            "user object has extra properties: " + extraProps
+            `user object has extra properties: ${extraProps}`,
           );
           callback();
         },
-        done
+        done,
       );
     });
   });
 
-  describe("test /user/:id", function () {
+  describe('test /user/:id', () => {
     let userList;
     const Users = models.userListModel();
 
-    it("can get the list of user", function (done) {
+    it('can get the list of user', (done) => {
       http.get(
         {
           hostname: host,
-          port: port,
-          path: "/user/list",
+          port,
+          path: '/user/list',
           headers: { Cookie: authCookie },
         },
-        function (response) {
-          let responseBody = "";
-          response.on("data", function (chunk) {
+        (response) => {
+          let responseBody = '';
+          response.on('data', (chunk) => {
             responseBody += chunk;
           });
 
-          response.on("end", function () {
+          response.on('end', () => {
             assert.strictEqual(
               response.statusCode,
               200,
-              "HTTP response status code not OK"
+              'HTTP response status code not OK',
             );
             userList = JSON.parse(responseBody);
             done();
           });
-        }
+        },
       );
     });
 
-    it("can get each of the user detail with /user/:id", function (done) {
+    it('can get each of the user detail with /user/:id', (done) => {
       async.each(
         Users,
-        function (realUser, callback) {
+        (realUser, callback) => {
           const user = _.find(userList, {
             first_name: realUser.first_name,
             last_name: realUser.last_name,
           });
           assert(
             user,
-            "could not find user " +
-              realUser.first_name +
-              " " +
-              realUser.last_name
+            `could not find user ${
+              realUser.first_name
+            } ${
+              realUser.last_name}`,
           );
           let userInfo;
           const id = user._id;
           http.get(
             {
               hostname: host,
-              port: port,
-              path: "/user/" + id,
+              port,
+              path: `/user/${id}`,
               headers: { Cookie: authCookie },
             },
-            function (response) {
-              let responseBody = "";
-              response.on("data", function (chunk) {
+            (response) => {
+              let responseBody = '';
+              response.on('data', (chunk) => {
                 responseBody += chunk;
               });
 
-              response.on("end", function () {
+              response.on('end', () => {
                 userInfo = JSON.parse(responseBody);
                 assert.strictEqual(userInfo._id, id);
                 assert.strictEqual(userInfo.first_name, realUser.first_name);
@@ -267,81 +266,81 @@ describe("Photo App: Server API Tests", function () {
 
                 const extraProps = _.difference(
                   Object.keys(removeMongoProperties(userInfo)),
-                  userDetailProperties
+                  userDetailProperties,
                 );
                 assert.strictEqual(
                   extraProps.length,
                   0,
-                  "user object has extra properties: " + extraProps
+                  `user object has extra properties: ${extraProps}`,
                 );
                 callback();
               });
-            }
+            },
           );
         },
-        done
+        done,
       );
     });
 
-    it("can return a 400 status on an invalid user id", function (done) {
+    it('can return a 400 status on an invalid user id', (done) => {
       http.get(
         {
           hostname: host,
-          port: port,
-          path: "/user/1",
+          port,
+          path: '/user/1',
           headers: { Cookie: authCookie },
         },
-        function (response) {
-          response.on("data", function () {});
-          response.on("end", function () {
+        (response) => {
+          response.on('data', () => {});
+          response.on('end', () => {
             assert.strictEqual(response.statusCode, 400);
             done();
           });
-          response.on("error", function (err) {
+          response.on('error', (err) => {
             done(err);
           });
-        }
-      ).on("error", function (err) {
+        },
+      ).on('error', (err) => {
         done(err);
       });
     });
   });
 
-  describe("test /photosOfUser/:id", function () {
+  describe('test /photosOfUser/:id', () => {
     let userList;
     const Users = models.userListModel();
 
-    it("can get the list of user", function (done) {
+    it('can get the list of user', (done) => {
       http.get(
         {
           hostname: host,
-          port: port,
-          path: "/user/list",
+          port,
+          path: '/user/list',
           headers: { Cookie: authCookie },
         },
-        function (response) {
-          let responseBody = "";
-          response.on("data", function (chunk) {
+        (response) => {
+          let responseBody = '';
+          response.on('data', (chunk) => {
             responseBody += chunk;
           });
 
-          response.on("end", function () {
+          response.on('end', () => {
             assert.strictEqual(
               response.statusCode,
               200,
-              "HTTP response status code not OK"
+              'HTTP response status code not OK',
             );
             userList = JSON.parse(responseBody);
             done();
           });
-        }
+        },
       );
     });
 
-    it("can get each of the user photos with /photosOfUser/:id", function (done) {
+    it('can get each of the user photos with /photosOfUser/:id', (done) => {
       async.each(
         Users,
-        function (realUser, callback) {
+        (realUser, callback) => {
           // validate the the user is in the list once
           const user = _.find(userList, {
             first_name: realUser.first_name,
@@ -349,34 +348,34 @@ describe("Photo App: Server API Tests", function () {
           });
           assert(
             user,
-            "could not find user " +
-              realUser.first_name +
-              " " +
-              realUser.last_name
+            `could not find user ${
+              realUser.first_name
+            } ${
+              realUser.last_name}`,
           );
           let photos;
           const id = user._id;
           http.get(
             {
               hostname: host,
-              port: port,
-              path: "/photosOfUser/" + id,
+              port,
+              path: `/photosOfUser/${id}`,
               headers: { Cookie: authCookie },
             },
-            function (response) {
-              let responseBody = "";
-              response.on("data", function (chunk) {
+            (response) => {
+              let responseBody = '';
+              response.on('data', (chunk) => {
                 responseBody += chunk;
               });
-              response.on("error", function (err) {
+              response.on('error', (err) => {
                 callback(err);
               });
 
-              response.on("end", function () {
+              response.on('end', () => {
                 assert.strictEqual(
                   response.statusCode,
                   200,
-                  "HTTP response status code not OK"
+                  'HTTP response status code not OK',
                 );
                 photos = JSON.parse(responseBody);
 
@@ -385,26 +384,26 @@ describe("Photo App: Server API Tests", function () {
                 assert.strictEqual(
                   real_photos.length,
                   photos.length,
-                  "wrong number of photos returned"
+                  'wrong number of photos returned',
                 );
-                _.forEach(real_photos, function (real_photo) {
+                _.forEach(real_photos, (real_photo) => {
                   const matches = _.filter(photos, {
                     file_name: real_photo.file_name,
                   });
                   assert.strictEqual(
                     matches.length,
                     1,
-                    " looking for photo " + real_photo.file_name
+                    ` looking for photo ${real_photo.file_name}`,
                   );
                   const photo = matches[0];
                   const extraProps1 = _.difference(
                     Object.keys(removeMongoProperties(photo)),
-                    photoProperties
+                    photoProperties,
                   );
                   assert.strictEqual(
                     extraProps1.length,
                     0,
-                    "photo object has extra properties: " + extraProps1
+                    `photo object has extra properties: ${extraProps1}`,
                   );
                   assert.strictEqual(photo.user_id, id);
                   assertEqualDates(photo.date_time, real_photo.date_time);
@@ -414,45 +413,45 @@ describe("Photo App: Server API Tests", function () {
                     assert.strictEqual(
                       photo.comments.length,
                       real_photo.comments.length,
-                      "comments on photo " + real_photo.file_name
+                      `comments on photo ${real_photo.file_name}`,
                     );
 
-                    _.forEach(real_photo.comments, function (real_comment) {
+                    _.forEach(real_photo.comments, (real_comment) => {
                       const comment = _.find(photo.comments, {
                         comment: real_comment.comment,
                       });
                       assert(comment);
                       const extraProps2 = _.difference(
                         Object.keys(removeMongoProperties(comment)),
-                        commentProperties
+                        commentProperties,
                       );
                       assert.strictEqual(
                         extraProps2.length,
                         0,
-                        "comment object has extra properties: " + extraProps2
+                        `comment object has extra properties: ${extraProps2}`,
                       );
                       assertEqualDates(
                         comment.date_time,
-                        real_comment.date_time
+                        real_comment.date_time,
                       );
 
                       const extraProps3 = _.difference(
                         Object.keys(removeMongoProperties(comment.user)),
-                        userListProperties
+                        userListProperties,
                       );
                       assert.strictEqual(
                         extraProps3.length,
                         0,
-                        "comment user object has extra properties: " +
-                          extraProps3
+                        `comment user object has extra properties: ${
+                          extraProps3}`,
                       );
                       assert.strictEqual(
                         comment.user.first_name,
-                        real_comment.user.first_name
+                        real_comment.user.first_name,
                       );
                       assert.strictEqual(
                         comment.user.last_name,
-                        real_comment.user.last_name
+                        real_comment.user.last_name,
                       );
                     });
                   } else {
@@ -461,34 +460,34 @@ describe("Photo App: Server API Tests", function () {
                 });
                 callback();
               });
-            }
+            },
           );
         },
-        function () {
+        () => {
           done();
-        }
+        },
       );
     });
 
-    it("can return a 400 status on an invalid id to photosOfUser", function (done) {
+    it('can return a 400 status on an invalid id to photosOfUser', (done) => {
       http.get(
         {
           hostname: host,
-          port: port,
-          path: "/photosOfUser/1",
+          port,
+          path: '/photosOfUser/1',
           headers: { Cookie: authCookie },
         },
-        function (response) {
-          response.on("data", function () {});
-          response.on("end", function () {
+        (response) => {
+          response.on('data', () => {});
+          response.on('end', () => {
             assert.strictEqual(response.statusCode, 400);
             done();
           });
-          response.on("error", function (err) {
+          response.on('error', (err) => {
             done(err);
           });
-        }
-      ).on("error", function (err) {
+        },
+      ).on('error', (err) => {
         done(err);
       });
     });
