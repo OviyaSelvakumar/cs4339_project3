@@ -9,29 +9,29 @@ import {
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import './styles/main.css';
-import TopBar from './components/TopBar';
-import LoginRegister from './components/LoginRegister';
-import UserDetail from './components/UserDetail';
-import UserList from './components/UserList';
-import UserPhotos from './components/UserPhotos';
+import TopBar from './components/TopBar/index.jsx';
+import LoginRegister from './components/LoginRegister/index.jsx';
+import UserDetail from './components/UserDetail/index.jsx';
+import UserList from './components/UserList/index.jsx';
+import UserPhotos from './components/UserPhotos/index.jsx';
 
-axios.defaults.baseURL = "http://localhost:3001";
+axios.defaults.baseURL = 'http://localhost:3001';
 axios.defaults.withCredentials = true;
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
-      staleTime: 3000
-    }
-  }
+      staleTime: 3000,
+    },
+  },
 });
 function useCurrentUser() {
   return useQuery({
-    queryKey: ["currentUser"],
+    queryKey: ['currentUser'],
     queryFn: async () => {
       try {
-        const res = await axios.get("/admin/me");
+        const res = await axios.get('/admin/me');
         return res.data;
       } catch (err) {
         if (err.response?.status === 401) {
@@ -40,7 +40,7 @@ function useCurrentUser() {
         throw err;
       }
     },
-    retry: false
+    retry: false,
   });
 }
 
@@ -63,25 +63,24 @@ function UserPhotosRoute() {
 }
 
 function Root() {
-  const {data: user, isLoading} = useCurrentUser();
+  const { data: user, isLoading } = useCurrentUser();
   const [loggingOut, setLoggingOut] = useState(false);
 
   const handleLogout = async () => {
     setLoggingOut(true);
-  }
+  };
 
   if (loggingOut) {
     return <Navigate to="/login-register" replace />;
   }
 
   if (isLoading) {
-    return <Typography>Loading...</Typography>
+    return <Typography>Loading...</Typography>;
   }
 
   if (!user) {
     return <Navigate to="/login-register" replace />;
   }
-
 
   return (
     <div>
@@ -122,7 +121,7 @@ function LoginPage() {
   }
 
   const handleLoginSuccess = (userData) => {
-  queryClient.setQueryData(['currentUser'], userData);
+    queryClient.setQueryData(['currentUser'], userData);
     navigate(`/users/${userData._id}`);
   };
 

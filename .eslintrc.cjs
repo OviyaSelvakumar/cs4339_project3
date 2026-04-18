@@ -25,13 +25,10 @@ module.exports = {
     'import/no-relative-packages': 'off',
     'import/extensions': [
       'error',
-      'always',
+      'ignorePackages',
       {
-        ignorePackages: true,
-        pattern: {
-          js: 'never',
-          jsx: 'never'
-        }
+        js: 'always',
+        jsx: 'always'
       }
     ],
     'no-param-reassign': [

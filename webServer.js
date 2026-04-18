@@ -14,23 +14,22 @@ const app = express();
 const port = process.env.PORT || 3001;
 const mongoUrl = process.env.MONGO_URL || 'mongodb://127.0.0.1/project3';
 
-
 app.use(express.json());
 app.use(cors({
   origin: true,
-  credentials: true
+  credentials: true,
 }));
 
 app.use(session({
-  secret: "secret",
+  secret: 'secret',
   resave: false,
   saveUninitialized: false,
-  name: "connect.sid",
+  name: 'connect.sid',
   cookie: {
     secure: false,
     httpOnly: true,
-    maxAge: 86400000
-  }
+    maxAge: 86400000,
+  },
 }));
 
 mongoose.connect(mongoUrl);
@@ -45,37 +44,38 @@ function isValidObjectId(id) {
   return mongoose.Types.ObjectId.isValid(id);
 }
 
-//Check that a valid session exists before processing the request
+// Check that a valid session exists before processing the request
 function requireAuth(req, res, next) {
   if (!req.session.userId) {
     return res.status(401).send('Not logged in! Unauthorized content.');
   }
   next();
+  return undefined;
 }
 
 /* POST /admin/login */
 app.post('/admin/login', async (req, res) => {
   try {
-    const {login_name, password} = req.body; //Accepts a JSON body with login_name and password
+    const { login_name, password } = req.body; // Accepts a JSON body with login_name and password
     if (!login_name || !password) {
       return res.status(400).send('Login name and password required!');
     }
 
-    const user = await User.findOne({login_name}); //Finds the user by login_name
-    if (!user) { //400 Bad Request if login fails
-      return res.status(400).send('Invalid login name!'); 
+    const user = await User.findOne({ login_name }); // Finds the user by login_name
+    if (!user) { // 400 Bad Request if login fails
+      return res.status(400).send('Invalid login name!');
     }
 
-    //When a user logs in, use bcrypt.compare to verify the password against the stored hash
-    const isValidPassword = await bcrypt.compare(password, user.password_digest); //Verifies the password using bcrypt.compare
-    if (!isValidPassword) { //400 Bad Request if login fails
+    // When a user logs in, use bcrypt.compare to verify the password against the stored hash
+    const isValidPassword = await bcrypt.compare(password, user.password_digest);
+    if (!isValidPassword) { // 400 Bad Request if login fails
       return res.status(400).send('Invalid password!');
     }
 
-    //When a user logs in successfully, store their identity in the session
+    // When a user logs in successfully, store their identity in the session
     req.session.userId = user._id.toString();
 
-    //Returns the logged-in user object (excluding password_digest)
+    // Returns the logged-in user object (excluding password_digest)
     return res.status(200).json({
       _id: user._id,
       first_name: user.first_name,
@@ -83,10 +83,10 @@ app.post('/admin/login', async (req, res) => {
       location: user.location,
       description: user.description,
       occupation: user.occupation,
-      login_name: user.login_name
+      login_name: user.login_name,
     });
   } catch (err) {
-    console.error("Error logging in: ", err);
+    console.error('Error logging in: ', err);
     return res.status(500).send(err.message);
   }
 });
@@ -94,36 +94,37 @@ app.post('/admin/login', async (req, res) => {
 /* POST /admin/logout */
 app.post('/admin/logout', async (req, res) => {
   try {
-    //Accepts an empty body
+    // Accepts an empty body
 
-    //Check that a valid session exists before processing the request
-    if (!req.session.userId) { 
-      return res.status(400).send("Not logged in!"); //Returns 400 Bad Request if no user is currently logged in
+    // Check that a valid session exists before processing the request
+    if (!req.session.userId) {
+      return res.status(400).send('Not logged in!'); // Returns 400 Bad Request if no user is currently logged in
     }
 
-    //Destroy the session
+    // Destroy the session
     req.session.destroy((err) => {
       if (err) {
-        return res.status(500).send("Log out error!");
+        return res.status(500).send('Log out error!');
       }
 
-      res.clearCookie("connect.sid");
-      return res.status(200).send("Logged out!");
+      res.clearCookie('connect.sid');
+      return res.status(200).send('Logged out!');
     });
+    return undefined;
   } catch (err) {
     return res.status(500).send(err.message);
   }
 });
 
 /* GET /admin/me */
-app.get("/admin/me", requireAuth, async(req, res) => {
+app.get('/admin/me', requireAuth, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
     if (!user) {
-      return res.status(404).send("User not found!");
+      return res.status(404).send('User not found!');
     }
 
-    //Returns the current session user
+    // Returns the current session user
     return res.json({
       _id: user._id,
       first_name: user.first_name,
@@ -131,31 +132,34 @@ app.get("/admin/me", requireAuth, async(req, res) => {
       location: user.location,
       description: user.description,
       occupation: user.occupation,
-      login_name: user.login_name
+      login_name: user.login_name,
     });
   } catch (err) {
-    res.status(500).send(err.message);
+    return res.status(500).send(err.message);
   }
-})
+});
 
 /* POST /user */
 app.post('/user', async (req, res) => {
   try {
-    //Accepts a JSON body with login_name, password, first_name, last_name, location, description, and occupation
-    const {login_name, password, first_name, last_name, location, description, occupation} = req.body;
+    // Accepts a JSON body with login_name, password, first_name,
+    //  last_name, location, description, and occupation
+    const {
+      login_name, password, first_name, last_name, location, description, occupation,
+    } = req.body;
 
-    //Validates that login_name, password, first_name, and last_name are non-empty
+    // Validates that login_name, password, first_name, and last_name are non-empty
     if (!login_name || !password || !first_name || !last_name) {
-      return res.status(400).send("Login name, password, first name, and last name are required!")
+      return res.status(400).send('Login name, password, first name, and last name are required!');
     }
 
-    //Validates that login_name does not already exist
-    const existing = await User.findOne({login_name});
+    // Validates that login_name does not already exist
+    const existing = await User.findOne({ login_name });
     if (existing) {
-      return res.status(400).send("Login name already exists!");
+      return res.status(400).send('Login name already exists!');
     }
 
-    //Hashes the password with bcrypt before saving
+    // Hashes the password with bcrypt before saving
     const saltRounds = 10;
     const password_digest = await bcrypt.hash(password, saltRounds);
 
@@ -164,9 +168,9 @@ app.post('/user', async (req, res) => {
       password_digest,
       first_name,
       last_name,
-      location: location || "",
-      description: description || "",
-      occupation: occupation || ""
+      location: location || '',
+      description: description || '',
+      occupation: occupation || '',
     });
 
     return res.status(200).json({
@@ -176,13 +180,13 @@ app.post('/user', async (req, res) => {
       location: user.location,
       description: user.description,
       occupation: user.occupation,
-      login_name: user.login_name
+      login_name: user.login_name,
     });
   } catch (err) {
-    console.error("Error registering: ", err);
+    console.error('Error registering: ', err);
     return res.status(500).send(err.message);
   }
-})
+});
 
 /* GET /user/:list */
 app.get('/user/list', requireAuth, async (req, res) => {

@@ -1,27 +1,30 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
+import {
+  AppBar, Toolbar, Typography, Button, Box,
+} from '@mui/material';
 import { useLocation } from 'react-router-dom';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import PropTypes from 'prop-types';
 import axios from 'axios';
 
 import './styles.css';
 
-function TopBar({user, onLogout}) {
+function TopBar({ user, onLogout }) {
   const queryClient = useQueryClient();
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await axios.post("/admin/logout");
+      await axios.post('/admin/logout');
     },
     onSuccess: () => {
-      queryClient.setQueryData(["currentUser"], null);
-      queryClient.invalidateQueries(["currentUser"]);
+      queryClient.setQueryData(['currentUser'], null);
+      queryClient.invalidateQueries(['currentUser']);
       onLogout();
-    }
+    },
   });
 
   const handleLogout = () => {
     logoutMutation.mutate();
-  }
+  };
 
   const location = useLocation();
   const path = location.pathname;
@@ -37,7 +40,7 @@ function TopBar({user, onLogout}) {
       const res = await axios.get(`/user/${activeUserId}`);
       return res.data;
     },
-    enabled: Boolean(activeUserId) && Boolean(user)
+    enabled: Boolean(activeUserId) && Boolean(user),
   });
 
   let contextText = '';
@@ -61,14 +64,29 @@ function TopBar({user, onLogout}) {
         )}
 
         {user && (
-          <Box sx={{display: "flex", alignItems: "center", gap: 2}}>
-            <Typography variant='h6' color="inherit"> Hi {user.first_name}</Typography>
-            <Button color='inherit' variant='outlined' onClick={handleLogout}>Logout</Button>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography variant="h6" color="inherit">
+              {' '}
+              Hi,
+              {user.first_name}
+            </Typography>
+            <Button color="inherit" variant="outlined" onClick={handleLogout}>Logout</Button>
           </Box>
         )}
       </Toolbar>
     </AppBar>
   );
 }
+
+TopBar.propTypes = {
+  user: PropTypes.shape({
+    first_name: PropTypes.string,
+  }),
+  onLogout: PropTypes.func.isRequired,
+};
+
+TopBar.defaultProps = {
+  user: null,
+};
 
 export default TopBar;
