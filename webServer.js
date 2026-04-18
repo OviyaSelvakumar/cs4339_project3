@@ -60,7 +60,7 @@ app.post('/admin/login', async (req, res) => {
       return res.status(400).send('Invalid password!');
     }
 
-    //user_id-specific session
+    //When a user logs in successfully, store their identity in the session
     req.session.userId = user_id.toString();
 
     return res.json({
@@ -76,6 +76,28 @@ app.post('/admin/login', async (req, res) => {
     return res.status(500).send(err.message);
   }
 });
+
+/* POST /admin/logout */
+app.post('.admin/logout', async (req, res) => {
+  try {
+    //Check that a valid session exists before processing the request
+    if (!req.session.userId) { 
+      return res.status(400).send("Not logged in!");
+    }
+
+    //Destroy the session
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).send("Log out error!");
+      }
+
+      res.clearCookie("connect.sid");
+      return res.status(200).send("Logged out!");
+    });
+  } catch (err) {
+    return res.status(500).status(err.message);
+  }
+})
 
 /* POST /user */
 app.post('/user', async (req, res) => {
