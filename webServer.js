@@ -41,28 +41,37 @@ function isValidObjectId(id) {
   return mongoose.Types.ObjectId.isValid(id);
 }
 
+//Check that a valid session exists before processing the request
+function requireAuth(req, res, next) {
+  if (!req.session.userId) {
+    return res.status(401).send('Not logged in! Unauthorized content.');
+  }
+  next();
+}
+
 /* POST /admin/login */
 app.post('/admin/login', async (req, res) => {
   try {
-    const {login_name, password} = req.body;
+    const {login_name, password} = req.body; //Accepts a JSON body with login_name and password
     if (!login_name || !password) {
       return res.status(400).send('Login name and password required!');
     }
 
-    const user = await User.findOne({login_name});
-    if (!user) {
+    const user = await User.findOne({login_name}); //Finds the user by login_name
+    if (!user) { //400 Bad Request if login fails
       return res.status(400, send('Invalid login name!'));
     }
 
     //When a user logs in, use bcrypt.compare to verify the password against the stored hash
-    const isValidPassword = await bcrypt.compare(password, user.password_digest);
-    if (!isValidPassword) {
+    const isValidPassword = await bcrypt.compare(password, user.password_digest); //Verifies the password using bcrypt.compare
+    if (!isValidPassword) { //400 Bad Request if login fails
       return res.status(400).send('Invalid password!');
     }
 
     //When a user logs in successfully, store their identity in the session
     req.session.userId = user_id.toString();
 
+    //Returns the logged-in user object (excluding password_digest)
     return res.json({
       _id: user._id,
       first_name: user.first_name,
@@ -78,11 +87,13 @@ app.post('/admin/login', async (req, res) => {
 });
 
 /* POST /admin/logout */
-app.post('.admin/logout', async (req, res) => {
+app.post('/admin/logout', async (req, res) => {
   try {
+    //Accepts an empty body
+
     //Check that a valid session exists before processing the request
     if (!req.session.userId) { 
-      return res.status(400).send("Not logged in!");
+      return res.status(400).send("Not logged in!"); //Returns 400 Bad Request if no user is currently logged in
     }
 
     //Destroy the session
@@ -95,14 +106,14 @@ app.post('.admin/logout', async (req, res) => {
       return res.status(200).send("Logged out!");
     });
   } catch (err) {
-    return res.status(500).status(err.message);
+    return res.status(500).send(err.message);
   }
-})
+});
 
 /* POST /user */
 app.post('/user', async (req, res) => {
   try {
-    //Accepts a JSON body with ...
+    //Accepts a JSON body with login_name, password, first_name, last_name, location, description, and occupation
     const {login_name, password, first_name, last_name, location, description, occupation} = req.body;
 
     //Validates that login_name, password, first_name, and last_name are non-empty
@@ -139,7 +150,7 @@ app.post('/user', async (req, res) => {
 })
 
 /* GET /user/:list */
-app.get('/user/list', async (req, res) => {
+app.get('/user/list', requireAuth, async (req, res) => {
   try {
     const users = await User.find({}, '_id first_name last_name').lean();
 
@@ -156,7 +167,7 @@ app.get('/user/list', async (req, res) => {
 });
 
 /* GET /user/:id */
-app.get('/user/:id', async (req, res) => {
+app.get('/user/:id', requireAuth, async (req, res) => {
   try {
     const { id: userId } = req.params;
 
@@ -184,7 +195,7 @@ app.get('/user/:id', async (req, res) => {
 });
 
 /* GET /photosOfUser/:id */
-app.get('/photosOfUser/:id', async (req, res) => {
+app.get('/photosOfUser/:id', requireAuth, async (req, res) => {
   try {
     const { id: userId } = req.params;
 
