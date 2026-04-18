@@ -4,7 +4,7 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import session from 'express-session';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 
 import User from './schema/user.js';
 import Photo from './schema/photo.js';
@@ -15,19 +15,23 @@ const port = process.env.PORT || 3001;
 const mongoUrl = process.env.MONGO_URL || 'mongodb://127.0.0.1/project3';
 
 
-
-app.use(cors());
 app.use(express.json());
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
 
 app.use(session({
-  secret: 'secret',
+  secret: "secret",
   resave: false,
   saveUninitialized: false,
+  name: "connect.sid",
   cookie: {
     secure: false,
-    httpOnly: true
+    httpOnly: true,
+    maxAge: 86400000
   }
-}))
+}));
 
 mongoose.connect(mongoUrl);
 
@@ -59,7 +63,7 @@ app.post('/admin/login', async (req, res) => {
 
     const user = await User.findOne({login_name}); //Finds the user by login_name
     if (!user) { //400 Bad Request if login fails
-      return res.status(400, send('Invalid login name!'));
+      return res.status(400).send('Invalid login name!'); 
     }
 
     //When a user logs in, use bcrypt.compare to verify the password against the stored hash
@@ -69,10 +73,10 @@ app.post('/admin/login', async (req, res) => {
     }
 
     //When a user logs in successfully, store their identity in the session
-    req.session.userId = user_id.toString();
+    req.session.userId = user._id.toString();
 
     //Returns the logged-in user object (excluding password_digest)
-    return res.json({
+    return res.status(200).json({
       _id: user._id,
       first_name: user.first_name,
       last_name: user.last_name,
@@ -82,6 +86,7 @@ app.post('/admin/login', async (req, res) => {
       login_name: user.login_name
     });
   } catch (err) {
+    console.error("Error logging in: ", err);
     return res.status(500).send(err.message);
   }
 });
@@ -110,6 +115,29 @@ app.post('/admin/logout', async (req, res) => {
   }
 });
 
+/* GET /admin/me */
+app.get("/admin/me", requireAuth, async(req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    if (!user) {
+      return res.status(404).send("User not found!");
+    }
+
+    //Returns the current session user
+    return res.json({
+      _id: user._id,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      location: user.location,
+      description: user.description,
+      occupation: user.occupation,
+      login_name: user.login_name
+    });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+})
+
 /* POST /user */
 app.post('/user', async (req, res) => {
   try {
@@ -117,7 +145,7 @@ app.post('/user', async (req, res) => {
     const {login_name, password, first_name, last_name, location, description, occupation} = req.body;
 
     //Validates that login_name, password, first_name, and last_name are non-empty
-    if (!login_name || !password || !first_name || last_name) {
+    if (!login_name || !password || !first_name || !last_name) {
       return res.status(400).send("Login name, password, first name, and last name are required!")
     }
 
@@ -131,20 +159,27 @@ app.post('/user', async (req, res) => {
     const saltRounds = 10;
     const password_digest = await bcrypt.hash(password, saltRounds);
 
-    const newUser = newUser({login_name, password_digest, first_name, last_name, location: location || "", description: description || "", occupation: occupation || ""});
-
-    await newUser.save();
+    const user = await User.create({
+      login_name,
+      password_digest,
+      first_name,
+      last_name,
+      location: location || "",
+      description: description || "",
+      occupation: occupation || ""
+    });
 
     return res.status(201).json({
-      _id: newUser._id,
-      first_name: newUser.first_name,
-      last_name: newUser.last_name,
-      location: newUser.location,
-      description: newUser.description,
-      occupation: newUser.occupation,
-      login_name: newUser.login_name
+      _id: user._id,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      location: user.location,
+      description: user.description,
+      occupation: user.occupation,
+      login_name: user.login_name
     });
   } catch (err) {
+    console.error("Error registering: ", err);
     return res.status(500).send(err.message);
   }
 })

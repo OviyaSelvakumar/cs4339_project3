@@ -10,7 +10,7 @@ import http from 'http';
 import async from 'async';
 import _ from 'lodash';
 import fs from 'fs';
-import models from '../modelData/photoApp';
+import models from '../modelData/photoApp.js';
 
 const port = 3001;
 const host = 'localhost';
