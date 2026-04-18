@@ -12,10 +12,10 @@
 import mongoose from 'mongoose';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import bluebird from 'bluebird';
-import models from './modelData/photoApp';
-import User from './schema/user';
-import Photo from './schema/photo';
-import SchemaInfo from './schema/schemaInfo';
+import models from './modelData/photoApp.js';
+import User from './schema/user.js';
+import Photo from './schema/photo.js';
+import SchemaInfo from './schema/schemaInfo.js';
 
 /** Bcrypt digest for seeded accounts; bcrypt.compare("password", ...) is true. */
 const SEEDED_PASSWORD_DIGEST = '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi';

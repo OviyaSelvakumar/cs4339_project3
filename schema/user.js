@@ -5,13 +5,13 @@ import mongoose from 'mongoose';
  * Define the Mongoose Schema for a User.
  */
 const userSchema = new mongoose.Schema({
-  login_name: {type: String, unique: true},
-  password_digest: String, 
   first_name: String,
   last_name: String,
   location: String,
   description: String,
   occupation: String,
+  login_name: {type: String, unique: true},
+  password_digest: String
 });
 
 /**

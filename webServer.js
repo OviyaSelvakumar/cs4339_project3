@@ -3,6 +3,8 @@
 import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
+import session from 'express-session';
+import bcrypt from 'bcryptjs';
 
 import User from './schema/user.js';
 import Photo from './schema/photo.js';
@@ -10,9 +12,22 @@ import Photo from './schema/photo.js';
 const app = express();
 
 const port = process.env.PORT || 3001;
-const mongoUrl = process.env.MONGO_URL || 'mongodb://127.0.0.1/project2';
+const mongoUrl = process.env.MONGO_URL || 'mongodb://127.0.0.1/project3';
+
+
 
 app.use(cors());
+app.use(express.json());
+
+app.use(session({
+  secret: 'secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: false,
+    httpOnly: true
+  }
+}))
 
 mongoose.connect(mongoUrl);
 
@@ -25,6 +40,81 @@ mongoose.connection.once('open', () => {
 function isValidObjectId(id) {
   return mongoose.Types.ObjectId.isValid(id);
 }
+
+/* POST /admin/login */
+app.post('/admin/login', async (req, res) => {
+  try {
+    const {login_name, password} = req.body;
+    if (!login_name || !password) {
+      return res.status(400).send('Login name and password required!');
+    }
+
+    const user = await User.findOne({login_name});
+    if (!user) {
+      return res.status(400, send('Invalid login name!'));
+    }
+
+    //When a user logs in, use bcrypt.compare to verify the password against the stored hash
+    const isValidPassword = await bcrypt.compare(password, user.password_digest);
+    if (!isValidPassword) {
+      return res.status(400).send('Invalid password!');
+    }
+
+    //user_id-specific session
+    req.session.userId = user_id.toString();
+
+    return res.json({
+      _id: user._id,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      location: user.location,
+      description: user.description,
+      occupation: user.occupation,
+      login_name: user.login_name
+    });
+  } catch (err) {
+    return res.status(500).send(err.message);
+  }
+});
+
+/* POST /user */
+app.post('/user', async (req, res) => {
+  try {
+    //Accepts a JSON body with ...
+    const {login_name, password, first_name, last_name, location, description, occupation} = req.body;
+
+    //Validates that login_name, password, first_name, and last_name are non-empty
+    if (!login_name || !password || !first_name || last_name) {
+      return res.status(400).send("Login name, password, first name, and last name are required!")
+    }
+
+    //Validates that login_name does not already exist
+    const existing = await User.findOne({login_name});
+    if (existing) {
+      return res.status(400).send("Login name already exists!");
+    }
+
+    //Hashes the password with bcrypt before saving
+    const saltRounds = 10;
+    const password_digest = await bcrypt.hash(password, saltRounds);
+
+    const newUser = newUser({login_name, password_digest, first_name, last_name, location: location || "", description: description || "", occupation: occupation || ""});
+
+    await newUser.save();
+
+    return res.status(201).json({
+      _id: newUser._id,
+      first_name: newUser.first_name,
+      last_name: newUser.last_name,
+      location: newUser.location,
+      description: newUser.description,
+      occupation: newUser.occupation,
+      login_name: newUser.login_name
+    });
+  } catch (err) {
+    return res.status(500).send(err.message);
+  }
+})
 
 /* GET /user/:list */
 app.get('/user/list', async (req, res) => {
