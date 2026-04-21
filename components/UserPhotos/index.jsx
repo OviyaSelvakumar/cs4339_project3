@@ -77,7 +77,9 @@ function CommentForm({ photoId }) {
         <Button
           variant="contained"
           size="small"
-          onClick={handleSubmit}
+          onClick={() => {
+            handleSubmit();
+          }}
           disabled={mutation.isPending}
           sx={{ whiteSpace: 'nowrap', alignSelf: 'flex-end' }}
         >
