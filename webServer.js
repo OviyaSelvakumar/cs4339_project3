@@ -21,7 +21,7 @@ app.use(cors({
 }));
 
 app.use(session({
-  secret: 'secret',
+  secret: process.env.SESSION_SECRET || 'secret',
   resave: false,
   saveUninitialized: false,
   name: 'connect.sid',
@@ -269,6 +269,40 @@ app.get('/photosOfUser/:id', requireAuth, async (req, res) => {
 
     return res.json(result);
   } catch (err) {
+    return res.status(500).send(err.message);
+  }
+});
+
+/* POST /commentsOfPhoto/:photoId */
+app.post('/commentsOfPhoto/:photoId', requireAuth, async (req, res) => {
+  try {
+    const { photoId } = req.params;
+    const { comment } = req.body;
+
+    if (!comment || comment.trim() === '') {
+      return res.status(400).send('Comment text is required!');
+    }
+
+    if (!isValidObjectId(photoId)) {
+      return res.status(400).send('Invalid photo id');
+    }
+
+    const photo = await Photo.findById(photoId);
+    if (!photo) {
+      return res.status(404).send('Photo not found');
+    }
+
+    photo.comments.push({
+      comment: comment.trim(),
+      date_time: new Date(),
+      user_id: req.session.userId,
+    });
+
+    await photo.save();
+
+    return res.status(200).send('Comment added!');
+  } catch (err) {
+    console.error('Error adding comment: ', err);
     return res.status(500).send(err.message);
   }
 });
