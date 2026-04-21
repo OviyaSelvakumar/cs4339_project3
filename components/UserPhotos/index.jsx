@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import {
   Typography, CircularProgress, Box, Card, CardMedia,
-  CardContent, Divider, List, ListItem,
+  CardContent, Divider, List, ListItem, TextField, Button, Alert,
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api.js';
 
 import './styles.css';
@@ -24,6 +25,78 @@ async function fetchPhotos(userId) {
   const res = await api.get(`/photosOfUser/${userId}`);
   return res.data;
 }
+
+async function postComment({ photoId, comment }) {
+  const res = await api.post(`/commentsOfPhoto/${photoId}`, { comment });
+  return res.data;
+}
+
+function CommentForm({ photoId }) {
+  const queryClient = useQueryClient();
+  const [text, setText] = useState('');
+  const [submitError, setSubmitError] = useState('');
+
+  const mutation = useMutation({
+    mutationFn: postComment,
+    onSuccess: () => {
+      setText('');
+      setSubmitError('');
+      // Refresh the photos query so the new comment appears immediately
+      queryClient.invalidateQueries({ queryKey: ['photos'] });
+    },
+    onError: (err) => {
+      setSubmitError(
+        err?.response?.data || 'Failed to post comment. Please try again.',
+      );
+    },
+  });
+
+  function handleSubmit() {
+    if (!text.trim()) {
+      setSubmitError('Comment cannot be empty.');
+      return;
+    }
+    setSubmitError('');
+    mutation.mutate({ photoId, comment: text });
+  }
+
+  return (
+    <Box sx={{ mt: 2 }}>
+      <Typography variant="subtitle2" gutterBottom>Add a comment</Typography>
+      <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+        <TextField
+          size="small"
+          fullWidth
+          multiline
+          minRows={2}
+          placeholder="Write a comment…"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          disabled={mutation.isPending}
+        />
+        <Button
+          variant="contained"
+          size="small"
+          onClick={() => {
+            handleSubmit();
+          }}
+          disabled={mutation.isPending}
+          sx={{ whiteSpace: 'nowrap', alignSelf: 'flex-end' }}
+        >
+          {mutation.isPending ? 'Posting…' : 'Post'}
+        </Button>
+      </Box>
+      {submitError && (
+        <Alert severity="error" sx={{ mt: 1 }}>
+          {submitError}
+        </Alert>
+      )}
+    </Box>
+  );
+}
+CommentForm.propTypes = {
+  photoId: PropTypes.string.isRequired,
+};
 
 function UserPhotos() {
   const { userId } = useParams();
@@ -100,6 +173,9 @@ function UserPhotos() {
             ) : (
               <Typography variant="body2" color="text.secondary">No comments yet.</Typography>
             )}
+
+            <Divider sx={{ my: 1 }} />
+            <CommentForm photoId={photo._id} />
           </CardContent>
         </Card>
       ))}
