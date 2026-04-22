@@ -1,3 +1,5 @@
+import dotenv from 'dotenv';
+dotenv.config();
 /**
  * Loads the Project 4 demo data into MongoDB using Mongoose.
  * Run: node loadDatabase.js
@@ -37,7 +39,7 @@ const cloudinaryUrls = {
 mongoose.Promise = bluebird;
 mongoose.set("strictQuery", false);
 const mongoUri =
-  process.env.MONGODB_URI || process.env.MONGO_URL || "mongodb+srv://susanzhang901_db_user:cs4339password@cluster0.eehcgfp.mongodb.net/project4?appName=Cluster0";
+  process.env.MONGODB_URI;
 mongoose.connect(mongoUri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
