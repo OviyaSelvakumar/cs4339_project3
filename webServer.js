@@ -12,7 +12,7 @@ import Photo from './schema/photo.js';
 const app = express();
 
 const port = process.env.PORT || 3001;
-const mongoUrl = process.env.MONGO_URL || 'mongodb://127.0.0.1/project3';
+const mongoUrl = process.env.MONGO_URI || 'mongodb+srv://susanzhang901_db_user:cs4339password@cluster0.eehcgfp.mongodb.net/project4?appName=Cluster0';
 
 app.use(express.json());
 app.use(cors({
