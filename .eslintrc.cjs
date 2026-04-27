@@ -19,7 +19,9 @@ module.exports = {
     }
   },
   rules: {
+    'react/require-default-props': 'off',
     'react/react-in-jsx-scope': 'off',
+    'no-use-before-define': 'off',
     'no-underscore-dangle': 'off',
     'camelcase': 'off',
     'import/no-relative-packages': 'off',

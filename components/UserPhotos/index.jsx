@@ -122,7 +122,7 @@ function UserPhotos() {
     <Box sx={{ p: 2 }}>
       {photos.map((photo) => (
         <Card key={photo._id} sx={{ mb: 3 }}>
-          {/* Since file_name now stores a full Cloudinary URL instead of a local filename, update your frontend's photo display logic to use file_name directly as the image src rather than constructing a local server path. */}
+          {/* update frontend's photo display logic to use file_name directly as the image src */}
           <CardMedia
             component="img"
             image={photo.file_name.startsWith('http') ? photo.file_name : `/images/${photo.file_name}`}

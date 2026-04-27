@@ -6,7 +6,7 @@ import { useLocation } from 'react-router-dom';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import PropTypes from 'prop-types';
 import axios from 'axios';
-import AddPhotoModal from '../AddPhotoModal';
+import AddPhotoModal from '../AddPhotoModal.jsx';
 
 import './styles.css';
 
@@ -56,18 +56,18 @@ function TopBar({ user = null, onLogout }) {
 
   return (
     <div>
-    <AppBar className="topbar-appBar" position="absolute">
-      <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
-        <Typography variant="h6" color="inherit">
-          Oviya Selvakumar & Susan Zhang
-        </Typography>
-        {contextText && (
+      <AppBar className="topbar-appBar" position="absolute">
+        <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Typography variant="h6" color="inherit">
+            Oviya Selvakumar & Susan Zhang
+          </Typography>
+          {contextText && (
           <Typography variant="h6" color="inherit">
             {contextText}
           </Typography>
-        )}
+          )}
 
-        {user && (
+          {user && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Typography variant="subtitle1" color="inherit">
               {' '}
@@ -75,15 +75,15 @@ function TopBar({ user = null, onLogout }) {
               {user.first_name}
             </Typography>
 
-            <Button color='inherit' variant='outlined' onClick={() => setModelOpen(true)}>Add Photo</Button>
+            <Button color="inherit" variant="outlined" onClick={() => setModelOpen(true)}>Add Photo</Button>
 
             <Button color="inherit" variant="outlined" onClick={handleLogout}>Logout</Button>
           </Box>
-        )}
-      </Toolbar>
-    </AppBar>
+          )}
+        </Toolbar>
+      </AppBar>
 
-    <AddPhotoModal open={modalOpen} onClose={() => setModelOpen(false)} />
+      <AddPhotoModal open={modalOpen} onClose={() => setModelOpen(false)} />
     </div>
   );
 }
