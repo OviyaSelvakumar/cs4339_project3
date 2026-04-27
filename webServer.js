@@ -309,6 +309,35 @@ app.post('/commentsOfPhoto/:photoId', requireAuth, async (req, res) => {
   }
 });
 
+/* POST /photos */
+app.post("/photos", requireAuth, async (req, res) => {
+  try {
+    const {url} = req.body; //Accepts a JSON body with a url field containing the Cloudinary image URL
+    
+    if (!url || url.trim() === ""){
+      return res.status(400).send("URL is missing or empty!"); //Returns 400 Bad Request if the URL is missing or empty
+    }
+
+    const photo = await Photo.create({ //Creates a new photo document in the database...
+      user_id: req.session.userId, //... associated with the currently logged-in user (from the session)
+      file_name: url.trim(), //Store the Cloudinary URL in the existing file_name field of the photo schema
+      date_time: new Date(), //Sets date_time to the current server time
+      comments: [],
+    });
+
+    return res.status(200).json({ //Returns the newly created photo object
+      _id: photo._id,
+      user_id: photo.user_id, 
+      file_name: photo.file_name,
+      date_time: photo.date_time,
+      comments: photo.comments
+    });
+  } catch (err) {
+    console.error("Error uploating photo: ", err);
+    return res.status(500).send(err.message);
+  }
+})
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });

@@ -10,7 +10,7 @@ import AddPhotoModal from '../AddPhotoModal';
 
 import './styles.css';
 
-function TopBar({ user, onLogout }) {
+function TopBar({ user = null, onLogout }) {
   const queryClient = useQueryClient();
   const [modalOpen, setModelOpen] = useState(false);
 
@@ -93,10 +93,6 @@ TopBar.propTypes = {
     first_name: PropTypes.string,
   }),
   onLogout: PropTypes.func.isRequired,
-};
-
-TopBar.defaultProps = {
-  user: null,
 };
 
 export default TopBar;

@@ -8,12 +8,16 @@ import axios from 'axios';
 const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
+const cloudinaryAxios = axios.create({
+    headers: {"Content-Type": "multipart/form-data"},
+});
+
 async function uploadToCloudinary(file) { //send the file directly to Cloudinary's upload endpoint ...
     const formData = new FormData(); //... using a FormData POST request ...
     formData.append("file", file);
     formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET); //... with your unsigned preset
 
-    const response = await axios.post(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, formData, { headers: {"Content-Type": "multipart/form-data"} } );
+    const response = await cloudinaryAxios.post(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, formData,);
     return response.data;
 }
 
@@ -46,7 +50,8 @@ function AddPhotoModal({open, onClose}) {
             saveMutation.mutate(data.secure_url); //... extract the secure_url from the response and send it to your backend API to be saved
         },
         onError: (err) => {
-            setImgError(err?.response.data?.error?.message || "Failed to upload to Cloudinary. Please try again!");
+            const message = err?.response?.data?.error?.message || err?.message || "Failed to upload to Cloudinary. Please try again!";
+            setImgError(message);
         }
     });
 
@@ -95,7 +100,14 @@ function AddPhotoModal({open, onClose}) {
                             <Typography variant='body2' color="text.secondary">Selected: {imgFile.name}</Typography>
                         )}
 
-                        {isUploading && (<Alert severity='error'>{imgError}</Alert>)}
+                        {imgError && (
+                            <Box sx={{display: "flex", alignItems: "center", gap: 1}}>
+                                <CircularProgress size={20} />
+                                <Typography variant="body2">{uploadMutation.isPending ? "Uploading ..." : "Saving ..."}</Typography>
+                            </Box>
+                        )}
+
+                        {imgError && (<Alert severity='error'>{imgError}</Alert>)}
                     </Box>
                 </DialogContent>
                 <DialogActions>
