@@ -54,8 +54,8 @@ const schemaInfo2 = {
 
 const im = {
   _id: '57231f1a30e4351f4e9f4bd7',
-  login_name: "1anmalcolm",
-  password: "im", 
+  login_name: '1anmalcolm',
+  password: 'im',
   first_name: 'Ian',
   last_name: 'Malcolm',
   location: 'Austin, TX',
@@ -65,8 +65,8 @@ const im = {
 
 const er = {
   _id: '57231f1a30e4351f4e9f4bd8',
-  login_name: "ellen.ripley",
-  password: "er", 
+  login_name: 'ellen.ripley',
+  password: 'er',
   first_name: 'Ellen',
   last_name: 'Ripley',
   location: 'Nostromo',
@@ -76,8 +76,8 @@ const er = {
 
 const pt = {
   _id: '57231f1a30e4351f4e9f4bd9',
-  login_name: "iamperegrintook",
-  password: "pt", 
+  login_name: 'iamperegrintook',
+  password: 'pt',
   first_name: 'Peregrin',
   last_name: 'Took',
   location: 'Gondor',
@@ -91,8 +91,8 @@ const pt = {
 
 const rk = {
   _id: '57231f1a30e4351f4e9f4bda',
-  login_name: "rey_kenobi_",
-  password: "rk",
+  login_name: 'rey_kenobi_',
+  password: 'rk',
   first_name: 'Rey',
   last_name: 'Kenobi',
   location: "D'Qar",
@@ -102,8 +102,8 @@ const rk = {
 
 const al = {
   _id: '57231f1a30e4351f4e9f4bdb',
-  login_name: "aprilludgate",
-  password: "al",
+  login_name: 'aprilludgate',
+  password: 'al',
   first_name: 'April',
   last_name: 'Ludgate',
   location: 'Pawnee, IN',
@@ -113,8 +113,8 @@ const al = {
 
 const jo = {
   _id: '57231f1a30e4351f4e9f4bdc',
-  login_name: "professor.john",
-  password: "jo",
+  login_name: 'professor.john',
+  password: 'jo',
   first_name: 'John',
   last_name: 'Ousterhout',
   location: 'Stanford, CA',
