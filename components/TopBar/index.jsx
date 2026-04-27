@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   AppBar, Toolbar, Typography, Button, Box,
 } from '@mui/material';
@@ -6,11 +6,14 @@ import { useLocation } from 'react-router-dom';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import PropTypes from 'prop-types';
 import axios from 'axios';
+import AddPhotoModal from '../AddPhotoModal';
 
 import './styles.css';
 
 function TopBar({ user, onLogout }) {
   const queryClient = useQueryClient();
+  const [modalOpen, setModelOpen] = useState(false);
+
   const logoutMutation = useMutation({
     mutationFn: async () => {
       await axios.post('/admin/logout');
@@ -52,9 +55,10 @@ function TopBar({ user, onLogout }) {
   }
 
   return (
+    <div>
     <AppBar className="topbar-appBar" position="absolute">
       <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
-        <Typography variant="h5" color="inherit">
+        <Typography variant="h6" color="inherit">
           Oviya Selvakumar & Susan Zhang
         </Typography>
         {contextText && (
@@ -65,16 +69,22 @@ function TopBar({ user, onLogout }) {
 
         {user && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="h6" color="inherit">
+            <Typography variant="subtitle1" color="inherit">
               {' '}
               Hi,
               {user.first_name}
             </Typography>
+
+            <Button color='inherit' variant='outlined' onClick={() => setModelOpen(true)}>Add Photo</Button>
+
             <Button color="inherit" variant="outlined" onClick={handleLogout}>Logout</Button>
           </Box>
         )}
       </Toolbar>
     </AppBar>
+
+    <AddPhotoModal open={modalOpen} onClose={() => setModelOpen(false)} />
+    </div>
   );
 }
 
