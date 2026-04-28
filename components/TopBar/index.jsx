@@ -12,7 +12,7 @@ import './styles.css';
 
 function TopBar({ user = null, onLogout }) {
   const queryClient = useQueryClient();
-  const [modalOpen, setModelOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
@@ -75,7 +75,7 @@ function TopBar({ user = null, onLogout }) {
               {user.first_name}
             </Typography>
 
-            <Button color="inherit" variant="outlined" onClick={() => setModelOpen(true)}>Add Photo</Button>
+            <Button color="inherit" variant="outlined" onClick={() => setModalOpen(true)}>Add Photo</Button>
 
             <Button color="inherit" variant="outlined" onClick={handleLogout}>Logout</Button>
           </Box>
@@ -83,7 +83,7 @@ function TopBar({ user = null, onLogout }) {
         </Toolbar>
       </AppBar>
 
-      <AddPhotoModal open={modalOpen} onClose={() => setModelOpen(false)} />
+      <AddPhotoModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
   );
 }
