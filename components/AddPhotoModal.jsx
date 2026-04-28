@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Box, Typography, CircularProgress, Alert,
@@ -7,9 +7,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import PropTypes from 'prop-types';
 import axios from 'axios';
 
-const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
-
 const cloudinaryAxios = axios.create({
   headers: { 'Content-Type': 'multipart/form-data' },
 });
@@ -17,9 +14,9 @@ const cloudinaryAxios = axios.create({
 async function uploadToCloudinary(file) { // send the file directly to Cloudinary ...
   const formData = new FormData(); // ... using a FormData POST request ...
   formData.append('file', file);
-  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET); // ... with your unsigned preset
+  formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET); // ... with your unsigned preset
 
-  const response = await cloudinaryAxios.post(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, formData);
+  const response = await cloudinaryAxios.post(`https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`, formData);
   return response.data;
 }
 
@@ -38,7 +35,6 @@ function AddPhotoModal({ open, onClose }) {
     mutationFn: savePhotoToBackend,
     onSuccess: () => { // After a successful upload ...
       queryClient.invalidateQueries({ queryKey: ['photos'] }); // ...the photo feed should update automatically to show the new photo using TanStack Query's invalidateQueries
-      handleClose();
     },
     onError: (err) => {
       setImgError(err?.response?.data || 'Failed to save photo. Please try again!');
@@ -55,6 +51,16 @@ function AddPhotoModal({ open, onClose }) {
       setImgError(message);
     },
   });
+
+  useEffect(() => {
+    if (!uploadMutation.isPending && !saveMutation.isPending
+        && !saveMutation.isIdle && saveMutation.isSuccess) {
+      setImgFile(null);
+      setImgError('');
+      onClose();
+    }
+  }, [uploadMutation.isPending, saveMutation.isPending,
+    saveMutation.isIdle, saveMutation.isSuccess, onClose]);
 
   const isUploading = uploadMutation.isPending || saveMutation.isPending;
 
@@ -107,14 +113,14 @@ function AddPhotoModal({ open, onClose }) {
               </Typography>
             )}
 
-            {imgError && (
+            {isUploading && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <CircularProgress size={20} />
                 <Typography variant="body2">{uploadMutation.isPending ? 'Uploading ...' : 'Saving ...'}</Typography>
               </Box>
             )}
 
-            {imgError && (<Alert severity="error">{imgError}</Alert>)}
+            {imgError && !isUploading && (<Alert severity="error">{imgError}</Alert>)}
           </Box>
         </DialogContent>
         <DialogActions>
