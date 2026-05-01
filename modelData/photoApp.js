@@ -76,8 +76,8 @@ const er = {
 
 const pt = {
   _id: '57231f1a30e4351f4e9f4bd9',
-  login_name: 'iamperegrintook',
-  password: 'pt',
+  login_name: 'took',
+  password: 'password',
   first_name: 'Peregrin',
   last_name: 'Took',
   location: 'Gondor',
