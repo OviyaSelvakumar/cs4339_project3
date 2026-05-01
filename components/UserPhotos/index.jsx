@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   Typography, CircularProgress, Box, Card, CardMedia,
-  CardContent, Divider, List, ListItem, TextField, Button, Alert, IconButton, Badge
+  CardContent, Divider, List, ListItem, TextField, Button, Alert, IconButton,
 } from '@mui/material';
 import Favorite from '@mui/icons-material/Favorite';
 import FavoriteBorder from '@mui/icons-material/FavoriteBorder';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api.js';
 
@@ -105,11 +105,11 @@ CommentForm.propTypes = {
   photoId: PropTypes.string.isRequired,
 };
 
-function LikeButton ({photo, currentUserId = null}) { 
+function LikeButton({ photo, currentUserId = null }) {
   const queryClient = useQueryClient();
 
   const hasLiked = photo.likes?.some(
-    (id) => id.toString() === currentUserId
+    (id) => id.toString() === currentUserId,
   );
 
   const likeCount = photo.likes?.length || 0;
@@ -117,20 +117,25 @@ function LikeButton ({photo, currentUserId = null}) {
   const mutation = useMutation({
     mutationFn: toggleLike,
     onSuccess: () => {
-      queryClient.invalidateQueries({queryKey: ["photos"]});
+      queryClient.invalidateQueries({ queryKey: ['photos'] });
     },
     onError: (err) => {
-      console.error("Error toggling like: ", err);
-    }
+      console.error('Error toggling like: ', err);
+    },
   });
 
   return (
-    <Box sx={{display: "flex", alignItems: "center", gap: 0.5, mt: 1}}>
-      <IconButton onClick={() => mutation.mutate(photo._id)} disabled={mutation.isPending} color={hasLiked ? "error" : "default"} size='small'>
+    <Box sx={{
+      display: 'flex', alignItems: 'center', gap: 0.5, mt: 1,
+    }}
+    >
+      <IconButton onClick={() => mutation.mutate(photo._id)} disabled={mutation.isPending} color={hasLiked ? 'error' : 'default'} size="small">
         {hasLiked ? <Favorite /> : <FavoriteBorder />}
       </IconButton>
-      <Typography variant='body2' color="text.secondary">
-        {likeCount} {likeCount === 1 ? "like" : "likes"}
+      <Typography variant="body2" color="text.secondary">
+        {likeCount}
+        {' '}
+        {likeCount === 1 ? 'like' : 'likes'}
       </Typography>
     </Box>
   );
@@ -144,8 +149,8 @@ LikeButton.propTypes = {
   currentUserId: PropTypes.string,
 };
 
-function UserPhotos({userId, currentUserId = null}) {
-  //const { userId } = useParams();
+function UserPhotos({ userId, currentUserId = null }) {
+  // const { userId } = useParams();
   const navigate = useNavigate();
 
   const {
@@ -230,5 +235,10 @@ function UserPhotos({userId, currentUserId = null}) {
     </Box>
   );
 }
+
+UserPhotos.propTypes = {
+  userId: PropTypes.string.isRequired,
+  currentUserId: PropTypes.string,
+};
 
 export default UserPhotos;

@@ -59,7 +59,7 @@ function UserDetailRoute() {
 
 function UserPhotosRoute() {
   const { userId } = useParams();
-  const {data: currentUser} = useCurrentUser();
+  const { data: currentUser } = useCurrentUser();
   return <UserPhotos userId={userId} currentUserId={currentUser?._id} />;
 }
 
