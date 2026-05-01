@@ -11,6 +11,7 @@ import dotenv from 'dotenv';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import mongoose from 'mongoose';
 // eslint-disable-next-line import/no-extraneous-dependencies
+import bcrypt from 'bcrypt';
 import bluebird from 'bluebird';
 import models from './modelData/photoApp.js';
 
@@ -59,32 +60,31 @@ Promise.all(removePromises)
 
     const userModels = models.userListModel();
     const mapFakeId2RealId = {};
-    const userPromises = userModels.map((user) => User.create({
-      login_name: user.login_name,
-      password: user.password,
-      first_name: user.first_name,
-      last_name: user.last_name,
-      location: user.location,
-      description: user.description,
-      occupation: user.occupation,
-    })
-      .then((userObj) => {
+    const userPromises = userModels.map(async (user) => {
+      const password_digest = await bcrypt.hash(user.password, 10);
+
+      return User.create({
+        login_name: user.login_name,
+        password_digest,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        location: user.location,
+        description: user.description,
+        occupation: user.occupation,
+      })
+        .then((userObj) => {
         // Set the unique ID of the object. We use the MongoDB generated _id
         // for now but we keep it distinct from the MongoDB ID so we can go to
         // something prettier in the future since these show up in URLs, etc.
-        userObj.save();
-        mapFakeId2RealId[user._id] = userObj._id;
-        user.objectID = userObj._id;
-        console.log(
-          'Adding user:',
-          `${user.first_name} ${user.last_name}`,
-          ' with ID ',
-          user.objectID,
-        );
-      })
-      .catch((err) => {
-        console.error('Error create user', err);
-      }));
+          userObj.save();
+          mapFakeId2RealId[user._id] = userObj._id;
+          user.objectID = userObj._id;
+          console.log('Adding user:', `${user.first_name} ${user.last_name}`, ' with ID ', user.objectID);
+        })
+        .catch((err) => {
+          console.error('Error create user', err);
+        });
+    });
 
     const allPromises = Promise.all(userPromises).then(() => {
       // Once we've loaded all the users into the User collection we add all the
