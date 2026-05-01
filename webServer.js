@@ -262,6 +262,7 @@ app.get('/photosOfUser/:id', requireAuth, async (req, res) => {
       user_id: photo.user_id,
       file_name: photo.file_name,
       date_time: photo.date_time,
+      likes: photo.likes || [], 
       comments: (photo.comments || []).map((comment) => ({
         _id: comment._id,
         comment: comment.comment,
@@ -306,6 +307,62 @@ app.post('/commentsOfPhoto/:photoId', requireAuth, async (req, res) => {
     return res.status(200).send('Comment added!');
   } catch (err) {
     console.error('Error adding comment: ', err);
+    return res.status(500).send(err.message);
+  }
+});
+
+/* POST /photos/:photoId/like */
+app.post("/photos/:photoId/like", requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+
+    const {photoId} = req.params;
+    if (!isValidObjectId(photoId)) {
+      return res.status(400).send("Invalid Photo ID!")
+    }
+
+    const photo = await Photo.findById(photoId);
+    if (!photo) {
+      return res.status(404).send("Photo does not exist!"); // Returns 404 Not Found if the photo does not exist
+    }
+
+    const userLikedIndex = photo.likes.findIndex(
+      (id) => id.toString() === userId
+    );
+    if (userLikedIndex === -1) { //If the user has not yet liked the photo...
+      photo.likes.push(new mongoose.Types.ObjectId(userId)); //... add their _id to the likes array
+    } else { //If the user has already liked the photo...
+      photo.likes.splice(userLikedIndex, 1); //...  remove their _id from the array (unlike)
+    }
+
+    await photo.save();
+
+    const users = await User.find({}, "_id first_name last_name").lean();
+    const userMap = {};
+    users.forEach((u) => {
+      userMap[u._id.toString()] = {
+        _id: u._id,
+        first_name: u.first_name,
+        last_name: u.last_name,
+      }
+    });
+
+    //Returns the updated photo object
+    return res.status(200).json({
+      _id: photo._id,
+      user_id: photo.user_id,
+      file_name: photo.file_name,
+      date_time: photo.date_time,
+      likes: photo.likes,
+      comments: (photo.comments || []).map((comment) => ({
+        _id: comment._id, 
+        comment: comment.comment, 
+        date_time: comment.date_time,
+        user: userMap[comment.user_id.toString()] || null
+      }))
+    });
+  } catch (err) {
+    console.error("Error liking photo: ", err);
     return res.status(500).send(err.message);
   }
 });
