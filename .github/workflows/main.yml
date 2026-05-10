@@ -1,0 +1,50 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install and lint frontend
+        working-directory: frontend
+        run: |
+          npm install
+          npm run lint
+
+      - name: Install and lint backend
+        working-directory: backend
+        run: |
+          npm install
+          npm run lint
+      - name: Start backend server
+        working-directory: backend
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          PORT: 3001
+        run: |
+          node webServer.js &
+          for i in $(seq 1 20); do
+            curl -s http://localhost:3001/admin/me > /dev/null && echo "Server ready" && break
+            echo "Waiting for server... ($i/20)"
+            sleep 1
+          done
+
+      - name: Install test dependencies
+        working-directory: backend/test
+        run: npm install
+
+      - name: Run tests
+        working-directory: backend/test
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+        run: npm test
