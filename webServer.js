@@ -11,8 +11,8 @@ import User from './schema/user.js';
 import Photo from './schema/photo.js';
 
 dotenv.config();
-
 const app = express();
+app.set('trust proxy', 1);
 
 const port = process.env.PORT || 3001;
 const mongoUrl = process.env.MONGODB_URI;
