@@ -39,7 +39,9 @@ app.use(session({
     maxAge: 86400000,
   },
 }));
-app.use('/images', express.static('images'));
+
+// ✅ FIX: serve images correctly (this fixes /images/kenobi2.jpg 404)
+app.use('/images', express.static(path.join(process.cwd(), 'images')));
 
 mongoose.connect(mongoUrl);
 
@@ -53,11 +55,13 @@ function isValidObjectId(id) {
   return mongoose.Types.ObjectId.isValid(id);
 }
 
+// ✅ FIX lint: always return something
 function requireAuth(req, res, next) {
   if (!req.session.userId) {
     return res.status(401).send('Not logged in! Unauthorized content.');
   }
   next();
+  return undefined;
 }
 
 /* POST /admin/login */
@@ -65,22 +69,53 @@ app.post('/admin/login', async (req, res) => {
   try {
     const { login_name, password } = req.body;
 
+    if (!login_name || !password) {
+      return res.status(400).send('Login name and password required!');
+    }
+
     const user = await User.findOne({ login_name });
-    if (!user) return res.status(400).send('Invalid login name!');
+    if (!user) {
+      return res.status(400).send('Invalid login name!');
+    }
 
     const ok = await bcrypt.compare(password, user.password_digest);
-    if (!ok) return res.status(400).send('Invalid password!');
+    if (!ok) {
+      return res.status(400).send('Invalid password!');
+    }
 
     req.session.userId = user._id.toString();
 
-    return res.json({
-      _id: user._id,
-      first_name: user.first_name,
-      last_name: user.last_name,
+    // IMPORTANT: session must be saved before response in tests
+    req.session.save(() => {
+      res.status(200).json({
+        _id: user._id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        location: user.location,
+        description: user.description,
+        occupation: user.occupation,
+        login_name: user.login_name,
+      });
     });
+
+    return undefined;
   } catch (err) {
     return res.status(500).send(err.message);
   }
+});
+
+/* POST /admin/logout */
+app.post('/admin/logout', requireAuth, (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).send('Logout error!');
+    }
+
+    res.clearCookie('connect.sid');
+    return res.status(200).send('Logged out!');
+  });
+
+  return undefined;
 });
 
 /* POST /user */
@@ -91,7 +126,7 @@ app.post('/user', async (req, res) => {
     } = req.body;
 
     if (!login_name || !password || !first_name || !last_name) {
-      return res.status(400).send('Login name, password, first name, and last name are required!');
+      return res.status(400).send('Missing required fields');
     }
 
     const existing = await User.findOne({ login_name });
@@ -99,8 +134,7 @@ app.post('/user', async (req, res) => {
       return res.status(400).send('Login name already exists!');
     }
 
-    const saltRounds = 10;
-    const password_digest = await bcrypt.hash(password, saltRounds);
+    const password_digest = await bcrypt.hash(password, 10);
 
     const user = await User.create({
       login_name,
@@ -122,7 +156,6 @@ app.post('/user', async (req, res) => {
       login_name: user.login_name,
     });
   } catch (err) {
-    console.error('Error registering: ', err);
     return res.status(500).send(err.message);
   }
 });
@@ -131,14 +164,7 @@ app.post('/user', async (req, res) => {
 app.get('/user/list', requireAuth, async (req, res) => {
   try {
     const users = await User.find({}, '_id first_name last_name').lean();
-
-    const result = users.map((u) => ({
-      _id: u._id,
-      first_name: u.first_name,
-      last_name: u.last_name,
-    }));
-
-    return res.json(result);
+    return res.json(users);
   } catch (err) {
     return res.status(500).send(err.message);
   }
@@ -147,26 +173,19 @@ app.get('/user/list', requireAuth, async (req, res) => {
 /* GET /user/:id */
 app.get('/user/:id', requireAuth, async (req, res) => {
   try {
-    const { id: userId } = req.params;
+    const { id } = req.params;
 
-    if (!isValidObjectId(userId)) {
+    if (!isValidObjectId(id)) {
       return res.status(400).send('Invalid user id');
     }
 
-    const user = await User.findById(userId).lean();
+    const user = await User.findById(id).lean();
 
     if (!user) {
       return res.status(404).send('User not found');
     }
 
-    return res.json({
-      _id: user._id,
-      first_name: user.first_name,
-      last_name: user.last_name,
-      location: user.location,
-      description: user.description,
-      occupation: user.occupation,
-    });
+    return res.json(user);
   } catch (err) {
     return res.status(500).send(err.message);
   }
@@ -175,25 +194,52 @@ app.get('/user/:id', requireAuth, async (req, res) => {
 /* GET /photosOfUser/:id */
 app.get('/photosOfUser/:id', requireAuth, async (req, res) => {
   try {
-    const photos = await Photo.find({ user_id: req.params.id }).lean();
-    return res.json(photos);
+    const { id } = req.params;
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).send('Invalid user id');
+    }
+
+    const photos = await Photo.find({ user_id: id }).lean();
+    const users = await User.find({}, '_id first_name last_name').lean();
+
+    const userMap = {};
+    users.forEach((u) => {
+      userMap[u._id.toString()] = u;
+    });
+
+    const result = photos.map((p) => ({
+      ...p,
+      comments: (p.comments || []).map((c) => ({
+        ...c,
+        user: userMap[c.user_id?.toString()] || null,
+      })),
+    }));
+
+    return res.json(result);
   } catch (err) {
     return res.status(500).send(err.message);
   }
 });
 
+/* POST /photos */
 app.post('/photos', requireAuth, async (req, res) => {
   try {
     const { url } = req.body;
+
+    if (!url || url.trim() === '') {
+      return res.status(400).send('URL is missing or empty!');
+    }
 
     const photo = await Photo.create({
       user_id: req.session.userId,
       file_name: url,
       date_time: new Date(),
       comments: [],
+      likes: [],
     });
 
-    return res.json(photo);
+    return res.status(200).json(photo);
   } catch (err) {
     return res.status(500).send(err.message);
   }
