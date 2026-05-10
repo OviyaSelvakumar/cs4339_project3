@@ -104,8 +104,7 @@ Promise.all(removePromises)
           );
         }
         return Photo.create({
-          file_name: photo.file_name,
-          photo_url: seededPhotoUrl,
+          file_name: seededPhotoUrl,
           date_time: photo.date_time,
           user_id: mapFakeId2RealId[photo.user_id],
         })
