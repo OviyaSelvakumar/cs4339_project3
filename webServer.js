@@ -16,16 +16,10 @@ const app = express();
 
 const port = process.env.PORT || 3001;
 const mongoUrl = process.env.MONGODB_URI;
-const isProduction = process.env.NODE_ENV === 'production';
 
 app.use(express.json());
-
-// In production, only accept requests from the Vercel frontend.
-// In development, mirror the request origin (accepts any localhost port).
 app.use(cors({
-  origin: isProduction
-    ? process.env.FRONTEND_URL
-    : true,
+  origin: true,
   credentials: true,
 }));
 
@@ -38,9 +32,8 @@ app.use(session({
   saveUninitialized: false,
   name: 'connect.sid',
   cookie: {
-    secure: isProduction,
+    secure: false,
     httpOnly: true,
-    sameSite: isProduction ? 'none' : 'lax',
     maxAge: 86400000,
   },
 }));
