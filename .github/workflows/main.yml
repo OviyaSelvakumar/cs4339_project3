@@ -13,37 +13,35 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install and lint frontend
-        working-directory: frontend
+      - name: Install and lint
         run: |
           npm install
           npm run lint
 
-      - name: Install and lint backend
-        working-directory: backend
-        run: |
-          npm install
-          npm run lint
       - name: Start backend server
-        working-directory: backend
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
           SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
           PORT: 3001
         run: |
           node webServer.js &
-          for i in $(seq 1 20); do
+          for i in $(seq 1 15); do
             curl -s http://localhost:3001/admin/me > /dev/null && echo "Server ready" && break
-            echo "Waiting for server... ($i/20)"
+            echo "Waiting... ($i/15)"
             sleep 1
           done
 
+      - name: Seed database
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        run: node loadDatabase.js
+
       - name: Install test dependencies
-        working-directory: backend/test
+        working-directory: test
         run: npm install
 
       - name: Run tests
-        working-directory: backend/test
+        working-directory: test
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
           SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
