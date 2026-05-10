@@ -1,0 +1,15 @@
+.env
+.env.*
+node_modules
+src/
+public/
+dist/
+.vite/
+.git
+.github
+.gitignore
+.vscode/
+.idea/
+test/
+*.log
+npm-debug.log*
