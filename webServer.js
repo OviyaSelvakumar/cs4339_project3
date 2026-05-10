@@ -6,8 +6,6 @@ import cors from 'cors';
 import mongoose from 'mongoose';
 import session from 'express-session';
 import bcrypt from 'bcrypt';
-import path from 'path';
-
 import User from './schema/user.js';
 import Photo from './schema/photo.js';
 
@@ -57,7 +55,9 @@ function requireAuth(req, res, next) {
   if (!req.session.userId) {
     return res.status(401).send('Not logged in! Unauthorized content.');
   }
+
   next();
+  return next();
 }
 
 /* POST /admin/login */
