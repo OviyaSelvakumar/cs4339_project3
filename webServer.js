@@ -20,9 +20,12 @@ const mongoUrl = process.env.MONGODB_URI;
 app.use(express.json());
 app.use(cors({
   origin: true,
-credentials: true,
+  credentials: true,
 }));
 
+// sameSite: 'none' + secure: true are required for cross-origin cookies in production.
+// Without these the browser silently drops the session cookie after login,
+// making every subsequent authenticated request return 401.
 app.use(session({
   secret: process.env.SESSION_SECRET || 'secret',
   resave: false,
@@ -59,26 +62,23 @@ function requireAuth(req, res, next) {
 /* POST /admin/login */
 app.post('/admin/login', async (req, res) => {
   try {
-    const { login_name, password } = req.body; // Accepts a JSON body with login_name and password
+    const { login_name, password } = req.body;
     if (!login_name || !password) {
       return res.status(400).send('Login name and password required!');
     }
 
-    const user = await User.findOne({ login_name }); // Finds the user by login_name
-    if (!user) { // 400 Bad Request if login fails
+    const user = await User.findOne({ login_name });
+    if (!user) {
       return res.status(400).send('Invalid login name!');
     }
 
-    // When a user logs in, use bcrypt.compare to verify the password against the stored hash
     const isValidPassword = await bcrypt.compare(password, user.password_digest);
-    if (!isValidPassword) { // 400 Bad Request if login fails
+    if (!isValidPassword) {
       return res.status(400).send('Invalid password!');
     }
 
-    // When a user logs in successfully, store their identity in the session
     req.session.userId = user._id.toString();
 
-    // Returns the logged-in user object (excluding password_digest)
     return res.status(200).json({
       _id: user._id,
       first_name: user.first_name,
@@ -97,19 +97,14 @@ app.post('/admin/login', async (req, res) => {
 /* POST /admin/logout */
 app.post('/admin/logout', async (req, res) => {
   try {
-    // Accepts an empty body
-
-    // Check that a valid session exists before processing the request
     if (!req.session.userId) {
-      return res.status(400).send('Not logged in!'); // Returns 400 Bad Request if no user is currently logged in
+      return res.status(400).send('Not logged in!');
     }
 
-    // Destroy the session
     req.session.destroy((err) => {
       if (err) {
         return res.status(500).send('Log out error!');
       }
-
       res.clearCookie('connect.sid');
       return res.status(200).send('Logged out!');
     });
@@ -127,7 +122,6 @@ app.get('/admin/me', requireAuth, async (req, res) => {
       return res.status(404).send('User not found!');
     }
 
-    // Returns the current session user
     return res.json({
       _id: user._id,
       first_name: user.first_name,
@@ -145,24 +139,19 @@ app.get('/admin/me', requireAuth, async (req, res) => {
 /* POST /user */
 app.post('/user', async (req, res) => {
   try {
-    // Accepts a JSON body with login_name, password, first_name,
-    //  last_name, location, description, and occupation
     const {
       login_name, password, first_name, last_name, location, description, occupation,
     } = req.body;
 
-    // Validates that login_name, password, first_name, and last_name are non-empty
     if (!login_name || !password || !first_name || !last_name) {
       return res.status(400).send('Login name, password, first name, and last name are required!');
     }
 
-    // Validates that login_name does not already exist
     const existing = await User.findOne({ login_name });
     if (existing) {
       return res.status(400).send('Login name already exists!');
     }
 
-    // Hashes the password with bcrypt before saving
     const saltRounds = 10;
     const password_digest = await bcrypt.hash(password, saltRounds);
 
@@ -191,7 +180,7 @@ app.post('/user', async (req, res) => {
   }
 });
 
-/* GET /user/:list */
+/* GET /user/list */
 app.get('/user/list', requireAuth, async (req, res) => {
   try {
     const users = await User.find({}, '_id first_name last_name').lean();
@@ -315,24 +304,24 @@ app.post('/commentsOfPhoto/:photoId', requireAuth, async (req, res) => {
 app.post('/photos/:photoId/like', requireAuth, async (req, res) => {
   try {
     const { userId } = req.session;
-
     const { photoId } = req.params;
+
     if (!isValidObjectId(photoId)) {
       return res.status(400).send('Invalid Photo ID!');
     }
 
     const photo = await Photo.findById(photoId);
     if (!photo) {
-      return res.status(404).send('Photo does not exist!'); // Returns 404 Not Found if the photo does not exist
+      return res.status(404).send('Photo does not exist!');
     }
 
     const userLikedIndex = photo.likes.findIndex(
       (id) => id.toString() === userId,
     );
-    if (userLikedIndex === -1) { // If the user has not yet liked the photo...
-      photo.likes.push(new mongoose.Types.ObjectId(userId)); // ... add their _id to the likes array
-    } else { // If the user has already liked the photo...
-      photo.likes.splice(userLikedIndex, 1); // ...  remove their _id from the array (unlike)
+    if (userLikedIndex === -1) {
+      photo.likes.push(new mongoose.Types.ObjectId(userId));
+    } else {
+      photo.likes.splice(userLikedIndex, 1);
     }
 
     await photo.save();
@@ -347,7 +336,6 @@ app.post('/photos/:photoId/like', requireAuth, async (req, res) => {
       };
     });
 
-    // Returns the updated photo object
     return res.status(200).json({
       _id: photo._id,
       user_id: photo.user_id,
@@ -370,20 +358,20 @@ app.post('/photos/:photoId/like', requireAuth, async (req, res) => {
 /* POST /photos */
 app.post('/photos', requireAuth, async (req, res) => {
   try {
-    const { url } = req.body; // Accepts a JSON body with url containing the Cloudinary image URL
+    const { url } = req.body;
 
     if (!url || url.trim() === '') {
-      return res.status(400).send('URL is missing or empty!'); // Returns 400 Bad Request if the URL is missing or empty
+      return res.status(400).send('URL is missing or empty!');
     }
 
-    const photo = await Photo.create({ // Creates a new photo document in the database...
-      user_id: req.session.userId, // ... associated with the currently logged-in user
-      file_name: url.trim(), // Store the URL in the file_name field of the photo schema
-      date_time: new Date(), // Sets date_time to the current server time
+    const photo = await Photo.create({
+      user_id: req.session.userId,
+      file_name: url.trim(),
+      date_time: new Date(),
       comments: [],
     });
 
-    return res.status(200).json({ // Returns the newly created photo object
+    return res.status(200).json({
       _id: photo._id,
       user_id: photo.user_id,
       file_name: photo.file_name,
@@ -391,7 +379,7 @@ app.post('/photos', requireAuth, async (req, res) => {
       comments: photo.comments,
     });
   } catch (err) {
-    console.error('Error uploating photo: ', err);
+    console.error('Error uploading photo: ', err);
     return res.status(500).send(err.message);
   }
 });
