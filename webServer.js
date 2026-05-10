@@ -17,23 +17,24 @@ const app = express();
 const port = process.env.PORT || 3001;
 const mongoUrl = process.env.MONGODB_URI;
 
+app.set('trust proxy', 1);
+
 app.use(express.json());
+
 app.use(cors({
   origin: true,
   credentials: true,
 }));
 
-// sameSite: 'none' + secure: true are required for cross-origin cookies in production.
-// Without these the browser silently drops the session cookie after login,
-// making every subsequent authenticated request return 401.
 app.use(session({
   secret: process.env.SESSION_SECRET || 'secret',
   resave: false,
   saveUninitialized: false,
   name: 'connect.sid',
   cookie: {
-    secure: false,
+    secure: true,
     httpOnly: true,
+    sameSite: 'none',
     maxAge: 86400000,
   },
 }));
@@ -318,6 +319,7 @@ app.post('/photos/:photoId/like', requireAuth, async (req, res) => {
     const userLikedIndex = photo.likes.findIndex(
       (id) => id.toString() === userId,
     );
+
     if (userLikedIndex === -1) {
       photo.likes.push(new mongoose.Types.ObjectId(userId));
     } else {
@@ -326,29 +328,7 @@ app.post('/photos/:photoId/like', requireAuth, async (req, res) => {
 
     await photo.save();
 
-    const users = await User.find({}, '_id first_name last_name').lean();
-    const userMap = {};
-    users.forEach((u) => {
-      userMap[u._id.toString()] = {
-        _id: u._id,
-        first_name: u.first_name,
-        last_name: u.last_name,
-      };
-    });
-
-    return res.status(200).json({
-      _id: photo._id,
-      user_id: photo.user_id,
-      file_name: photo.file_name,
-      date_time: photo.date_time,
-      likes: photo.likes,
-      comments: (photo.comments || []).map((comment) => ({
-        _id: comment._id,
-        comment: comment.comment,
-        date_time: comment.date_time,
-        user: userMap[comment.user_id.toString()] || null,
-      })),
-    });
+    return res.status(200).json(photo);
   } catch (err) {
     console.error('Error liking photo: ', err);
     return res.status(500).send(err.message);
@@ -371,13 +351,7 @@ app.post('/photos', requireAuth, async (req, res) => {
       comments: [],
     });
 
-    return res.status(200).json({
-      _id: photo._id,
-      user_id: photo.user_id,
-      file_name: photo.file_name,
-      date_time: photo.date_time,
-      comments: photo.comments,
-    });
+    return res.status(200).json(photo);
   } catch (err) {
     console.error('Error uploading photo: ', err);
     return res.status(500).send(err.message);
