@@ -15,7 +15,7 @@ import UserDetail from './components/UserDetail/index.jsx';
 import UserList from './components/UserList/index.jsx';
 import UserPhotos from './components/UserPhotos/index.jsx';
 
-axios.defaults.baseURL = 'http://localhost:3001';
+axios.defaults.baseURL = 'https://cs4339-project3.onrender.com';
 axios.defaults.withCredentials = true;
 
 const queryClient = new QueryClient({
