@@ -19,8 +19,8 @@ const mongoUrl = process.env.MONGODB_URI;
 
 app.use(express.json());
 app.use(cors({
-  origin: true
-  credentials: true,
+  origin: true,
+credentials: true,
 }));
 
 app.use(session({
