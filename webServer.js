@@ -257,6 +257,7 @@ app.get('/photosOfUser/:id', requireAuth, async (req, res) => {
       _id: photo._id,
       user_id: photo.user_id,
       file_name: photo.file_name,
+      photo_url: photo.photo_url || null,
       date_time: photo.date_time,
       likes: photo.likes || [],
       comments: (photo.comments || []).map((comment) => ({
