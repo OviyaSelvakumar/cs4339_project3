@@ -190,13 +190,45 @@ function UserPhotos({ userId, currentUserId = null }) {
     return <Typography sx={{ p: 2 }}>No photos available.</Typography>;
   }
 
+  const cloudinaryUrls = {
+    'kenobi1.jpg':
+      'https://res.cloudinary.com/megamukil/image/upload/v1776568710/photoapp-seed/kenobi1.jpg',
+    'kenobi2.jpg':
+      'https://res.cloudinary.com/megamukil/image/upload/v1776568711/photoapp-seed/kenobi2.jpg',
+    'kenobi3.jpg':
+      'https://res.cloudinary.com/megamukil/image/upload/v1776568711/photoapp-seed/kenobi3.jpg',
+    'kenobi4.jpg':
+      'https://res.cloudinary.com/megamukil/image/upload/v1776568712/photoapp-seed/kenobi4.jpg',
+    'ludgate1.jpg':
+      'https://res.cloudinary.com/megamukil/image/upload/v1776568712/photoapp-seed/ludgate1.jpg',
+    'malcolm1.jpg':
+      'https://res.cloudinary.com/megamukil/image/upload/v1776568713/photoapp-seed/malcolm1.jpg',
+    'malcolm2.jpg':
+      'https://res.cloudinary.com/megamukil/image/upload/v1776568713/photoapp-seed/malcolm2.jpg',
+    'ouster.jpg':
+      'https://res.cloudinary.com/megamukil/image/upload/v1776568714/photoapp-seed/ouster.jpg',
+    'ripley1.jpg':
+      'https://res.cloudinary.com/megamukil/image/upload/v1776568714/photoapp-seed/ripley1.jpg',
+    'ripley2.jpg':
+      'https://res.cloudinary.com/megamukil/image/upload/v1776568715/photoapp-seed/ripley2.jpg',
+    'took1.jpg':
+      'https://res.cloudinary.com/megamukil/image/upload/v1776568715/photoapp-seed/took1.jpg',
+    'took2.jpg':
+      'https://res.cloudinary.com/megamukil/image/upload/v1776568716/photoapp-seed/took2.jpg',
+  };
+
   return (
     <Box sx={{ p: 2 }}>
       {photos.map((photo) => (
         <Card key={photo._id} sx={{ mb: 3 }}>
           <CardMedia
             component="img"
-            image={photo.photo_url || photo.file_name}
+            image={
+              photo.file_name.startsWith('http')
+                ? photo.file_name
+                : cloudinaryUrls[photo.file_name]
+                  || `/images/${photo.file_name}`
+            }
             alt="User photo"
             sx={{ maxHeight: 400, objectFit: 'contain', bgcolor: '#f5f5f5' }}
           />
