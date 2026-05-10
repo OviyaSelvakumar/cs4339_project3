@@ -1,8 +1,19 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Typography, CircularProgress, Box, Card, CardMedia,
-  CardContent, Divider, List, ListItem, TextField, Button, Alert, IconButton,
+  Typography,
+  CircularProgress,
+  Box,
+  Card,
+  CardMedia,
+  CardContent,
+  Divider,
+  List,
+  ListItem,
+  TextField,
+  Button,
+  Alert,
+  IconButton,
 } from '@mui/material';
 import Favorite from '@mui/icons-material/Favorite';
 import FavoriteBorder from '@mui/icons-material/FavoriteBorder';
@@ -69,7 +80,9 @@ function CommentForm({ photoId }) {
 
   return (
     <Box sx={{ mt: 2 }}>
-      <Typography variant="subtitle2" gutterBottom>Add a comment</Typography>
+      <Typography variant="subtitle2" gutterBottom>
+        Add a comment
+      </Typography>
       <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
         <TextField
           size="small"
@@ -108,9 +121,7 @@ CommentForm.propTypes = {
 function LikeButton({ photo, currentUserId = null }) {
   const queryClient = useQueryClient();
 
-  const hasLiked = photo.likes?.some(
-    (id) => id.toString() === currentUserId,
-  );
+  const hasLiked = photo.likes?.some((id) => id.toString() === currentUserId);
 
   const likeCount = photo.likes?.length || 0;
 
@@ -125,16 +136,24 @@ function LikeButton({ photo, currentUserId = null }) {
   });
 
   return (
-    <Box sx={{
-      display: 'flex', alignItems: 'center', gap: 0.5, mt: 1,
-    }}
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 0.5,
+        mt: 1,
+      }}
     >
-      <IconButton onClick={() => mutation.mutate(photo._id)} disabled={mutation.isPending} color={hasLiked ? 'error' : 'default'} size="small">
+      <IconButton
+        onClick={() => mutation.mutate(photo._id)}
+        disabled={mutation.isPending}
+        color={hasLiked ? 'error' : 'default'}
+        size="small"
+      >
         {hasLiked ? <Favorite /> : <FavoriteBorder />}
       </IconButton>
       <Typography variant="body2" color="text.secondary">
         {likeCount}
-        {' '}
         {likeCount === 1 ? 'like' : 'likes'}
       </Typography>
     </Box>
@@ -144,7 +163,9 @@ function LikeButton({ photo, currentUserId = null }) {
 LikeButton.propTypes = {
   photo: PropTypes.shape({
     _id: PropTypes.string.isRequired,
-    likes: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.object])),
+    likes: PropTypes.arrayOf(
+      PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    ),
   }).isRequired,
   currentUserId: PropTypes.string,
 };
@@ -173,10 +194,9 @@ function UserPhotos({ userId, currentUserId = null }) {
     <Box sx={{ p: 2 }}>
       {photos.map((photo) => (
         <Card key={photo._id} sx={{ mb: 3 }}>
-          {/* update frontend's photo display logic to use file_name directly as the image src */}
           <CardMedia
             component="img"
-            image={photo.file_name.startsWith('http') ? photo.file_name : `/images/${photo.file_name}`}
+            image={photo.photo_url || photo.file_name}
             alt="User photo"
             sx={{ maxHeight: 400, objectFit: 'contain', bgcolor: '#f5f5f5' }}
           />
@@ -188,15 +208,23 @@ function UserPhotos({ userId, currentUserId = null }) {
             <Divider sx={{ my: 1 }} />
             {photo.comments && photo.comments.length > 0 ? (
               <div>
-                <Typography variant="subtitle2" gutterBottom>Comments:</Typography>
+                <Typography variant="subtitle2" gutterBottom>
+                  Comments:
+                </Typography>
                 <List disablePadding>
                   {photo.comments.map((comment) => (
                     <ListItem
                       key={comment._id}
                       disableGutters
-                      sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 1 }}
+                      sx={{
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                        mb: 1,
+                      }}
                     >
-                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                      <Box
+                        sx={{ display: 'flex', gap: 1, alignItems: 'center' }}
+                      >
                         <Typography
                           component="button"
                           variant="subtitle2"
@@ -211,7 +239,6 @@ function UserPhotos({ userId, currentUserId = null }) {
                           }}
                         >
                           {comment.user.first_name}
-                          {' '}
                           {comment.user.last_name}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
@@ -224,7 +251,9 @@ function UserPhotos({ userId, currentUserId = null }) {
                 </List>
               </div>
             ) : (
-              <Typography variant="body2" color="text.secondary">No comments yet.</Typography>
+              <Typography variant="body2" color="text.secondary">
+                No comments yet.
+              </Typography>
             )}
 
             <Divider sx={{ my: 1 }} />
