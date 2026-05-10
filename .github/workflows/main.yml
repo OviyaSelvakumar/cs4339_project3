@@ -7,6 +7,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,15 +23,26 @@ jobs:
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
           SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          NODE_ENV: test
           PORT: 3001
         run: |
           node webServer.js &
-          for i in $(seq 1 15); do
-            curl -s http://localhost:3001/admin/me > /dev/null && echo "Server ready" && break
-            echo "Waiting... ($i/15)"
+          echo "Waiting for server on port 3001..."
+          for i in $(seq 1 30); do
+            if curl -s http://localhost:3001/admin/me > /dev/null 2>&1; then
+              echo "Server is ready after ${i}s"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "ERROR: Server did not start within 30 seconds"
+              exit 1
+            fi
             sleep 1
           done
 
+      # Seed Atlas with clean data before every test run.
+      # Without this, leftover users from previous runs cause the
+      # user-count assertion to fail (e.g. 8 users found, 6 expected).
       - name: Seed database
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
