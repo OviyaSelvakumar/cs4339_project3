@@ -15,8 +15,8 @@
 ## Deployed Links
 | Type | URL |
 |--------|------|
-| Frontend | [lorem.com](lorem.com) |
-| Backend | [lorem.com](lorem.com) |
+| Frontend | [cs4339-project3-eight.vercel.app](https://cs4339-project3-eight.vercel.app) |
+| Backend | [cs4339-project3.onrender.com](https://cs4339-project3.onrender.com) |
 
 ### Setup
 ```bash
